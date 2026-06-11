@@ -1,0 +1,35 @@
+{
+  "name": "@drukar/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json",
+    "pipeline:run": "tsx src/cli/run-pipeline.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
+    "@drukar/shared": "workspace:*",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^6.0.0",
+    "@gltf-transform/core": "^4.4.0",
+    "fastify": "^5.8.5",
+    "manifold-3d": "^3.5.1",
+    "three": "^0.184.0",
+    "three-mesh-bvh": "^0.9.10",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/three": "^0.184.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.22.4",
+    "vitest": "^4.1.8"
+  }
+}

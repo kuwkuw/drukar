@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# runtime data (job state + mesh artifacts)
+/data/
+
+# environment
+.env
+.env.local
+
+# editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
