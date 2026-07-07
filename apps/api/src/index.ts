@@ -6,10 +6,15 @@ import { loadAgentConfig, loadPrintabilityConfig } from './config.js';
 import { JobStore } from './jobs/store.js';
 import { createProvider } from './providers/index.js';
 
-try {
-  process.loadEnvFile('.env');
-} catch {
-  // no local .env file — fall back to process env (e.g. docker-compose env_file)
+// Dev runs with cwd=apps/api but .env lives at the repo root; try both. In Docker,
+// env comes from compose env_file, so having no .env at all is fine too.
+for (const envPath of ['.env', '../../.env']) {
+  try {
+    process.loadEnvFile(envPath);
+    break;
+  } catch {
+    // keep looking; fall back to plain process env if none found
+  }
 }
 
 async function main(): Promise<void> {
