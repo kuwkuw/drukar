@@ -38,3 +38,16 @@ export function loadPrintabilityConfig(): PrintabilityConfig {
     buildVolumeMm: parseBuildVolume(process.env.DRUKAR_BUILD_VOLUME, [220, 220, 250]),
   };
 }
+
+export interface AgentConfig {
+  model: string;
+  /** Regeneration attempts allowed after the first, i.e. job.maxAttempts = 1 + maxRegenerations. */
+  maxRegenerations: number;
+}
+
+export function loadAgentConfig(): AgentConfig {
+  return {
+    model: process.env.DRUKAR_MODEL || 'claude-fable-5',
+    maxRegenerations: envNumber('DRUKAR_MAX_REGENERATIONS', 2),
+  };
+}
