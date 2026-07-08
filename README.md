@@ -108,6 +108,8 @@ changes. See `TODO(python)` markers in `apps/api/src/providers/index.ts`.
 - `apps/web` — React SPA: chat, 3D preview, report (no SSR, no router)
 - `apps/api` — Fastify: agent loop, providers, printability pipeline, jobs, SSE
 - `packages/shared` — zod schemas + TS types shared by both
+- `docs/knowledge` — the *why*: business ideas and technical features as an
+  [open-knowledge-format catalog](docs/knowledge/index.md) (one Markdown record each)
 
 ## Tests
 
