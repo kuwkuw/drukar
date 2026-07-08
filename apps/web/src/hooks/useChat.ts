@@ -24,17 +24,27 @@ export function useChat() {
   const [activity, setActivity] = useState<ToolActivity[]>([]);
   const [jobId, setJobId] = useState<string>();
   const [isStreaming, setIsStreaming] = useState(false);
+  // True from Send until the first event of any kind arrives — the "thinking…" phase, which on a
+  // slow/local model is many seconds of otherwise-blank UI.
+  const [awaitingResponse, setAwaitingResponse] = useState(false);
+  // Wall-clock start of the in-flight request (ms), for an elapsed timer; undefined when idle.
+  const [startedAt, setStartedAt] = useState<number>();
+  const abortRef = useRef<AbortController>(null);
   const queryClient = useQueryClient();
 
-  // TODO(ui-visibility): richer request-processing feedback. Today the only signal between
-  // Send and the first event is the disabled button — on a slow/local model that gap is many
-  // seconds of apparent nothing. Add a "thinking…" placeholder + elapsed timer while awaiting
-  // the first chunk, and surface the job's status transitions (generating → validating →
-  // repairing) live from job_update instead of only the final report badge.
+  // NOTE(ui-visibility): finer-grained pipeline phases (generating → validating → repairing) aren't
+  // shown live because the printability pipeline is one synchronous call inside executeGenerateModel
+  // — surfacing them would require the backend to emit intermediate job_update events around it.
+
+  const cancel = useCallback(() => abortRef.current?.abort(), []);
 
   const send = useCallback(
     async (message: string) => {
+      const controller = new AbortController();
+      abortRef.current = controller;
       setIsStreaming(true);
+      setAwaitingResponse(true);
+      setStartedAt(Date.now());
       setMessages((m) => [...m, { id: nextBubbleId++, role: 'user', text: message }]);
 
       // One in-flight assistant bubble per turn; text_chunks append to it.
@@ -49,7 +59,8 @@ export function useChat() {
       };
 
       try {
-        for await (const event of streamChat({ chatId: chatIdRef.current, message })) {
+        for await (const event of streamChat({ chatId: chatIdRef.current, message }, controller.signal)) {
+          setAwaitingResponse(false); // any event ends the thinking phase
           switch (event.type) {
             case 'text_chunk':
               appendAssistant(event.text);
@@ -80,14 +91,20 @@ export function useChat() {
           }
         }
       } catch (err) {
-        const text = err instanceof Error ? err.message : String(err);
-        setMessages((m) => [...m, { id: nextBubbleId++, role: 'error', text }]);
+        // A user-initiated cancel isn't an error — just stop, leaving any partial reply in place.
+        if (!(err instanceof DOMException && err.name === 'AbortError')) {
+          const text = err instanceof Error ? err.message : String(err);
+          setMessages((m) => [...m, { id: nextBubbleId++, role: 'error', text }]);
+        }
       } finally {
+        abortRef.current = null;
         setIsStreaming(false);
+        setAwaitingResponse(false);
+        setStartedAt(undefined);
       }
     },
     [queryClient],
   );
 
-  return { messages, activity, jobId, isStreaming, send };
+  return { messages, activity, jobId, isStreaming, awaitingResponse, startedAt, send, cancel };
 }

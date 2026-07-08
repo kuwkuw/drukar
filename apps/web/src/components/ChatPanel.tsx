@@ -25,18 +25,36 @@ function ActivityRow({ item }: { item: ToolActivity }) {
   );
 }
 
+/** Live "working NNs" indicator; ticks once a second while a request is in flight. */
+function ProcessingRow({ startedAt, awaiting }: { startedAt: number; awaiting: boolean }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(t);
+  }, []);
+  const seconds = Math.max(0, Math.floor((now - startedAt) / 1000));
+  return (
+    <div className="self-start text-xs text-neutral-500">
+      <span className="animate-pulse">{awaiting ? 'Thinking' : 'Working'}…</span> {seconds}s
+    </div>
+  );
+}
+
 export function ChatPanel(props: {
   messages: ChatBubble[];
   activity: ToolActivity[];
   isStreaming: boolean;
+  awaitingResponse: boolean;
+  startedAt?: number;
   onSend: (message: string) => void;
+  onCancel: () => void;
 }) {
   const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [props.messages, props.activity]);
+  }, [props.messages, props.activity, props.isStreaming]);
 
   const submit = () => {
     const message = draft.trim();
@@ -60,6 +78,9 @@ export function ChatPanel(props: {
         {props.activity.map((t) => (
           <ActivityRow key={t.toolUseId} item={t} />
         ))}
+        {props.isStreaming && props.startedAt !== undefined && (
+          <ProcessingRow startedAt={props.startedAt} awaiting={props.awaitingResponse} />
+        )}
         <div ref={bottomRef} />
       </div>
 
@@ -77,13 +98,22 @@ export function ChatPanel(props: {
             }
           }}
         />
-        <button
-          className="rounded-md bg-sky-700 px-4 text-sm font-medium disabled:opacity-40"
-          disabled={props.isStreaming || !draft.trim()}
-          onClick={submit}
-        >
-          {props.isStreaming ? '…' : 'Send'}
-        </button>
+        {props.isStreaming ? (
+          <button
+            className="rounded-md bg-red-800 px-4 text-sm font-medium hover:bg-red-700"
+            onClick={props.onCancel}
+          >
+            Stop
+          </button>
+        ) : (
+          <button
+            className="rounded-md bg-sky-700 px-4 text-sm font-medium disabled:opacity-40"
+            disabled={!draft.trim()}
+            onClick={submit}
+          >
+            Send
+          </button>
+        )}
       </div>
     </div>
   );

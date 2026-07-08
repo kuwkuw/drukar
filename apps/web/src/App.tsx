@@ -26,7 +26,10 @@ export function App() {
           messages={chat.messages}
           activity={chat.activity}
           isStreaming={chat.isStreaming}
+          awaitingResponse={chat.awaitingResponse}
+          startedAt={chat.startedAt}
           onSend={chat.send}
+          onCancel={chat.cancel}
         />
       </aside>
 
