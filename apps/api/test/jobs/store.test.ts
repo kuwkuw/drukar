@@ -57,4 +57,36 @@ describe('JobStore', () => {
     const store = new JobStore(join(dataDir, 'does-not-exist'));
     await expect(store.hydrate()).resolves.toBeUndefined();
   });
+
+  it('deletes a single job from memory and disk', async () => {
+    const store = new JobStore(dataDir);
+    const job = await store.create({ userRequest: 'x', generationPrompt: 'x', options, maxAttempts: 3 });
+
+    expect(await store.delete(job.id)).toBe(true);
+    expect(store.get(job.id)).toBeUndefined();
+
+    const rehydrated = new JobStore(dataDir);
+    await rehydrated.hydrate();
+    expect(rehydrated.get(job.id)).toBeUndefined();
+  });
+
+  it('delete returns false for an unknown job', async () => {
+    const store = new JobStore(dataDir);
+    expect(await store.delete('nope')).toBe(false);
+  });
+
+  it('clear wipes all jobs from memory and disk', async () => {
+    const store = new JobStore(dataDir);
+    const a = await store.create({ userRequest: 'a', generationPrompt: 'a', options, maxAttempts: 3 });
+    const b = await store.create({ userRequest: 'b', generationPrompt: 'b', options, maxAttempts: 3 });
+
+    await store.clear();
+    expect(store.get(a.id)).toBeUndefined();
+    expect(store.get(b.id)).toBeUndefined();
+
+    const rehydrated = new JobStore(dataDir);
+    await rehydrated.hydrate();
+    expect(rehydrated.get(a.id)).toBeUndefined();
+    expect(rehydrated.get(b.id)).toBeUndefined();
+  });
 });

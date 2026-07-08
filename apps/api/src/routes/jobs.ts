@@ -16,6 +16,19 @@ export function registerJobsRoute(app: FastifyInstance, deps: { jobStore: JobSto
     return job;
   });
 
+  // Wipe all jobs + artifacts (housekeeping). Registered before :id so it isn't shadowed.
+  app.delete('/api/jobs', async (_request, reply) => {
+    await deps.jobStore.clear();
+    return reply.code(204).send();
+  });
+
+  app.delete('/api/jobs/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const existed = await deps.jobStore.delete(id);
+    if (!existed) return reply.code(404).send({ error: 'Job not found' });
+    return reply.code(204).send();
+  });
+
   app.get('/api/jobs/:id/artifacts/:name', async (request, reply) => {
     const { id, name } = request.params as { id: string; name: string };
     const contentType = ARTIFACT_CONTENT_TYPES[name];

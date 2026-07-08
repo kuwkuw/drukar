@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { streamChat } from '../api/client';
+import { clearJobs, deleteChat, deleteJob, streamChat } from '../api/client';
 
 export interface ChatBubble {
   id: number;
@@ -37,6 +37,33 @@ export function useChat() {
   // — surfacing them would require the backend to emit intermediate job_update events around it.
 
   const cancel = useCallback(() => abortRef.current?.abort(), []);
+
+  /** Reset to a fresh conversation: stop any stream, drop the server transcript, clear the UI. */
+  const newChat = useCallback(() => {
+    abortRef.current?.abort();
+    void deleteChat(chatIdRef.current);
+    chatIdRef.current = crypto.randomUUID();
+    setMessages([]);
+    setActivity([]);
+    setJobId(undefined);
+    setAwaitingResponse(false);
+    setStartedAt(undefined);
+  }, []);
+
+  /** Delete the currently shown job (+ its artifacts) and clear the preview/report view. */
+  const deleteCurrentJob = useCallback(async () => {
+    if (!jobId) return;
+    await deleteJob(jobId);
+    queryClient.removeQueries({ queryKey: ['job', jobId] });
+    setJobId(undefined);
+  }, [jobId, queryClient]);
+
+  /** Wipe all jobs server-side and clear the current view. */
+  const clearAllJobs = useCallback(async () => {
+    await clearJobs();
+    queryClient.removeQueries({ queryKey: ['job'] });
+    setJobId(undefined);
+  }, [queryClient]);
 
   const send = useCallback(
     async (message: string) => {
@@ -106,5 +133,17 @@ export function useChat() {
     [queryClient],
   );
 
-  return { messages, activity, jobId, isStreaming, awaitingResponse, startedAt, send, cancel };
+  return {
+    messages,
+    activity,
+    jobId,
+    isStreaming,
+    awaitingResponse,
+    startedAt,
+    send,
+    cancel,
+    newChat,
+    deleteCurrentJob,
+    clearAllJobs,
+  };
 }

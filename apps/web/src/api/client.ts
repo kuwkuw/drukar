@@ -38,6 +38,21 @@ export async function fetchJob(id: string): Promise<Job> {
   return JobSchema.parse(await res.json());
 }
 
+/** Drop a chat's server-side transcript. Best-effort — a failure shouldn't block a UI reset. */
+export async function deleteChat(chatId: string): Promise<void> {
+  await fetch(`/api/chat/${chatId}`, { method: 'DELETE' }).catch(() => {});
+}
+
+export async function deleteJob(id: string): Promise<void> {
+  const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+  if (!res.ok && res.status !== 404) throw new Error(`Job delete failed: ${res.status}`);
+}
+
+export async function clearJobs(): Promise<void> {
+  const res = await fetch('/api/jobs', { method: 'DELETE' });
+  if (!res.ok) throw new Error(`Clear jobs failed: ${res.status}`);
+}
+
 /** cacheKey (job.updatedAt) busts the GLTF loader cache when a regeneration rewrites preview.glb. */
 export function artifactUrl(jobId: string, name: string, cacheKey: string): string {
   return `/api/jobs/${jobId}/artifacts/${name}?v=${encodeURIComponent(cacheKey)}`;

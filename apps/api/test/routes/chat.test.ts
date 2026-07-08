@@ -71,4 +71,21 @@ describe('POST /api/chat', () => {
     const res = await app.inject({ method: 'POST', url: '/api/chat', payload: { chatId: '' } });
     expect(res.statusCode).toBe(400);
   });
+
+  it('deletes a chat session', async () => {
+    const sessionStore = new SessionStore();
+    sessionStore.save('chat-x', { history: [{ role: 'user', content: 'hi' }] });
+    app = await buildApp({
+      llm: new ScriptedLlmClient([{}]),
+      provider: new MockProvider(),
+      jobStore: new JobStore(dataDir),
+      sessionStore,
+      config: testPrintabilityConfig,
+      maxAttempts: 3,
+    });
+
+    const res = await app.inject({ method: 'DELETE', url: '/api/chat/chat-x' });
+    expect(res.statusCode).toBe(204);
+    expect(sessionStore.get('chat-x').history).toHaveLength(0);
+  });
 });

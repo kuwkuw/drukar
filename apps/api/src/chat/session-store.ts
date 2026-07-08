@@ -16,4 +16,9 @@ export class SessionStore {
   save(chatId: string, session: ChatSession): void {
     this.sessions.set(chatId, session);
   }
+
+  /** Drops a chat's transcript so "new chat" doesn't leave it lingering until restart. */
+  delete(chatId: string): void {
+    this.sessions.delete(chatId);
+  }
 }

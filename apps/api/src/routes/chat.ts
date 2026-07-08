@@ -22,4 +22,11 @@ export function registerChatRoute(app: FastifyInstance, deps: AgentLoopDeps): vo
     }
     reply.raw.end();
   });
+
+  // Drop a chat's server-side transcript (used by "new chat").
+  app.delete('/api/chat/:chatId', async (request, reply) => {
+    const { chatId } = request.params as { chatId: string };
+    deps.sessionStore.delete(chatId);
+    return reply.code(204).send();
+  });
 }

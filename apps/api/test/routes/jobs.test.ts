@@ -77,4 +77,23 @@ describe('GET /api/jobs/:id', () => {
     const res = await app.inject({ method: 'GET', url: `/api/jobs/${jobId}/artifacts/nope.txt` });
     expect(res.statusCode).toBe(404);
   });
+
+  it('deletes a single job', async () => {
+    const del = await app.inject({ method: 'DELETE', url: `/api/jobs/${jobId}` });
+    expect(del.statusCode).toBe(204);
+    const get = await app.inject({ method: 'GET', url: `/api/jobs/${jobId}` });
+    expect(get.statusCode).toBe(404);
+  });
+
+  it('returns 404 when deleting an unknown job', async () => {
+    const res = await app.inject({ method: 'DELETE', url: '/api/jobs/does-not-exist' });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('clears all jobs', async () => {
+    const del = await app.inject({ method: 'DELETE', url: '/api/jobs' });
+    expect(del.statusCode).toBe(204);
+    const get = await app.inject({ method: 'GET', url: `/api/jobs/${jobId}` });
+    expect(get.statusCode).toBe(404);
+  });
 });

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { GenOptions, Job } from '@drukar/shared';
 import { JobSchema } from '@drukar/shared';
@@ -59,6 +59,25 @@ export class JobStore {
     this.jobs.set(id, updated);
     await this.persist(updated);
     return updated;
+  }
+
+  /** Removes one job from memory and deletes its snapshot dir. Returns false if it didn't exist. */
+  async delete(id: string): Promise<boolean> {
+    const existed = this.jobs.delete(id);
+    await rm(join(this.dataDir, id), { recursive: true, force: true });
+    return existed;
+  }
+
+  /** Wipes all jobs from memory and removes every job dir under dataDir (keeps dataDir itself). */
+  async clear(): Promise<void> {
+    this.jobs.clear();
+    let entries: string[];
+    try {
+      entries = await readdir(this.dataDir);
+    } catch {
+      return;
+    }
+    await Promise.all(entries.map((entry) => rm(join(this.dataDir, entry), { recursive: true, force: true })));
   }
 
   private async persist(job: Job): Promise<void> {

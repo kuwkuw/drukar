@@ -28,7 +28,7 @@ function CheckRow({ check }: { check: CheckResult }) {
   );
 }
 
-export function ReportPanel({ job }: { job: Job | undefined }) {
+export function ReportPanel({ job, onDelete }: { job: Job | undefined; onDelete?: () => void }) {
   if (!job) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-neutral-600">
@@ -47,15 +47,25 @@ export function ReportPanel({ job }: { job: Job | undefined }) {
         <span className="text-xs text-neutral-400">
           attempt {job.attempt}/{job.maxAttempts}
         </span>
-        {job.status === 'done' && job.artifacts.stl && (
-          <a
-            className="ml-auto rounded bg-emerald-800 px-2 py-0.5 text-xs font-medium hover:bg-emerald-700"
-            href={artifactUrl(job.id, job.artifacts.stl, job.updatedAt)}
-            download="model.stl"
-          >
-            Download STL
-          </a>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {job.status === 'done' && job.artifacts.stl && (
+            <a
+              className="rounded bg-emerald-800 px-2 py-0.5 text-xs font-medium hover:bg-emerald-700"
+              href={artifactUrl(job.id, job.artifacts.stl, job.updatedAt)}
+              download="model.stl"
+            >
+              Download STL
+            </a>
+          )}
+          {onDelete && (
+            <button
+              className="rounded border border-neutral-700 px-2 py-0.5 text-xs text-neutral-300 hover:bg-neutral-800"
+              onClick={onDelete}
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
 
       {job.error && <p className="mb-3 text-xs text-red-400">{job.error}</p>}
