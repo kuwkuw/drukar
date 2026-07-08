@@ -26,10 +26,10 @@ feature(s) that implement it, **Traces to** the business idea(s) that motivate i
   and **never invents them**. Encoded in the system prompt and the `functional` gen option.
 
 ### FR-003 — Generate a 3D mesh from the prompt
-- **Priority:** Must · **Status:** partial
+- **Priority:** Must · **Status:** met
 - **Satisfied by:** [F-002](../features/F-002-generation-provider-abstraction.md) · **Traces to:** [B-003](../business/B-003-delegate-generation-own-trust.md)
-- Produce a mesh from the (optimized) prompt via the configured provider. **Mock provider met; real
-  Tripo3D generation is stubbed** (`TODO(tripo)`).
+- Produce a mesh from the (optimized) prompt via the configured provider — the offline `mock`
+  provider or the real Tripo3D `text_to_model` API (`DRUKAR_PROVIDER=tripo`).
 
 ### FR-004 — Validate printability
 - **Priority:** Must · **Status:** met
@@ -94,4 +94,11 @@ feature(s) that implement it, **Traces to** the business idea(s) that motivate i
 - A landing page explaining the value proposition for first-time visitors. See `TODO(landing-page)`
   in `apps/web/src/App.tsx`.
 
-_Next id: `FR-015`._
+### FR-015 — Manage session and job lifecycle
+- **Priority:** Should · **Status:** met
+- **Satisfied by:** [F-004](../features/F-004-agent-loop-sse.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
+- The user can start a new chat (reset the conversation + drop its server transcript), delete an
+  individual job with its artifacts, and clear all jobs. Backed by `DELETE /api/chat/:chatId`,
+  `DELETE /api/jobs/:id`, and `DELETE /api/jobs`.
+
+_Next id: `FR-016`._

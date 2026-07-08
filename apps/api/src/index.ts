@@ -29,7 +29,10 @@ async function main(): Promise<void> {
   const app = await buildApp(
     {
       llm: createLlmClient(agentConfig),
-      provider: createProvider(providerId),
+      provider: createProvider(providerId, {
+        tripoApiKey: process.env.TRIPO_API_KEY,
+        tripoModelVersion: process.env.TRIPO_MODEL_VERSION,
+      }),
       jobStore,
       sessionStore: new SessionStore(),
       config: printabilityConfig,

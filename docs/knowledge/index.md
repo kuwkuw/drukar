@@ -95,7 +95,7 @@ implementing code in `links`.
 
 | register | count |
 |---|---|
-| [Functional (`FR-`)](requirements/functional.md) | 14 |
+| [Functional (`FR-`)](requirements/functional.md) | 15 |
 | [Non-functional (`NFR-`)](requirements/non-functional.md) | 10 |
 
-_Next ids: business `B-004`, feature `F-005`, functional `FR-015`, non-functional `NFR-011`._
+_Next ids: business `B-004`, feature `F-005`, functional `FR-016`, non-functional `NFR-011`._

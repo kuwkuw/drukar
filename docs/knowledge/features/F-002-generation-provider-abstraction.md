@@ -2,7 +2,7 @@
 id: F-002
 type: feature
 title: Generation provider abstraction
-status: partial
+status: implemented
 tags: [providers, generation, extensibility]
 related: [B-003, F-004]
 links:
@@ -36,8 +36,9 @@ factory. Implementations:
   sample mesh (clean / holed / broken), writes it to a temp STL. Runs fully offline, zero keys, and
   lets tests/demos deterministically exercise the regenerate-on-failure path (a "broken" prompt
   yields an unrepairable mesh).
-- **`tripo`** ([tripo.ts](../../../apps/api/src/providers/tripo.ts)) — stub that throws until wired
-  to the Tripo3D API (`TODO(tripo)`).
+- **`tripo`** ([tripo.ts](../../../apps/api/src/providers/tripo.ts)) — real Tripo3D client: creates
+  a `text_to_model` task, polls until success, downloads the resulting GLB to a temp file. Requires
+  `TRIPO_API_KEY`.
 
 ### Rationale
 
@@ -48,9 +49,8 @@ is demoable and testable without any paid API.
 
 ### Status & gaps
 
-- Interface, factory, and mock provider: implemented and tested
-  (`apps/api/test/providers/mock.test.ts`).
-- **Tripo3D provider: not implemented** — the real text→mesh path is still a stub, so live runs
-  only ever return the three sample meshes. This is the main gap between "demo" and "product."
+- Interface, factory, mock provider, and Tripo3D provider: implemented and tested
+  (`apps/api/test/providers/mock.test.ts`, `tripo.test.ts` — the latter drives the create→poll→
+  download flow with an injected `fetch`).
 - A future `python` provider (FastAPI + trimesh, for heavy repair) plugs in via the same interface;
   see the README and `TODO(python)`.
