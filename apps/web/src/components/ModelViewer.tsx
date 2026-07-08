@@ -44,8 +44,12 @@ export function ModelViewer({ job }: { job: Job | undefined }) {
   return (
     <ViewerErrorBoundary resetKey={url}>
       <Canvas camera={{ position: [0, 0, 120], fov: 45 }}>
+        {/* Explicit lights: drei's environment presets fetch HDRIs from a CDN, breaking offline use. */}
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[5, 10, 7]} intensity={2.5} />
+        <directionalLight position={[-5, -2, -7]} intensity={0.8} />
         <Suspense fallback={null}>
-          <Stage intensity={0.5} environment={null} adjustCamera={1.2}>
+          <Stage intensity={1} environment={null} adjustCamera={1.2}>
             <Model url={url} />
           </Stage>
         </Suspense>

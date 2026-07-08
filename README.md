@@ -82,6 +82,20 @@ interface GenerationProvider {
 }
 ```
 
+## Swapping LLM providers
+
+Set `DRUKAR_LLM_PROVIDER=anthropic|openai`. The agent loop only depends on the `LlmClient`
+interface (`apps/api/src/agent/llm-client.ts`); implementations are selected by
+`createLlmClient()` in `apps/api/src/agent/llm-factory.ts`. The `openai` provider speaks the
+chat-completions protocol, so with `DRUKAR_LLM_BASE_URL` it covers OpenAI, Ollama (local),
+OpenRouter, Groq, Mistral and Gemini's compat endpoint:
+
+```bash
+DRUKAR_LLM_PROVIDER=openai
+DRUKAR_LLM_BASE_URL=http://localhost:11434/v1   # Ollama
+DRUKAR_MODEL=qwen3:8b
+```
+
 ### Where Python / local inference plugs in later
 
 If the "% of first-try successful prints" metric degrades due to weak mesh repair, a

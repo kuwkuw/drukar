@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { PrinterType } from '@drukar/shared';
 
 export interface PrintabilityConfig {
@@ -39,15 +40,32 @@ export function loadPrintabilityConfig(): PrintabilityConfig {
   };
 }
 
+/** api-internal (selected via env, never crosses the api/web boundary), so not in @drukar/shared. */
+export const LlmProviderIdSchema = z.enum(['anthropic', 'openai']);
+export type LlmProviderId = z.infer<typeof LlmProviderIdSchema>;
+
 export interface AgentConfig {
+  /** LLM backend: 'anthropic' (default) or 'openai' (any chat-completions-compatible server). */
+  llmProvider: LlmProviderId;
   model: string;
+  /** Base URL for the openai provider, e.g. http://localhost:11434/v1 (Ollama) or an OpenRouter/Gemini-compat URL. */
+  llmBaseUrl?: string;
+  /** API key for the openai provider; Ollama ignores it but the SDK requires one, hence the placeholder. */
+  llmApiKey?: string;
   /** Regeneration attempts allowed after the first, i.e. job.maxAttempts = 1 + maxRegenerations. */
   maxRegenerations: number;
 }
 
 export function loadAgentConfig(): AgentConfig {
+  const llmBaseUrl = process.env.DRUKAR_LLM_BASE_URL || undefined;
   return {
+    llmProvider: LlmProviderIdSchema.parse(process.env.DRUKAR_LLM_PROVIDER || 'anthropic'),
     model: process.env.DRUKAR_MODEL || 'claude-fable-5',
+    llmBaseUrl,
+    llmApiKey:
+      process.env.DRUKAR_LLM_API_KEY ||
+      process.env.OPENAI_API_KEY ||
+      (llmBaseUrl ? 'ollama' : undefined),
     maxRegenerations: envNumber('DRUKAR_MAX_REGENERATIONS', 2),
   };
 }

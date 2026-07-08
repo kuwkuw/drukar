@@ -1,5 +1,5 @@
 import { GenerationProviderIdSchema } from '@drukar/shared';
-import { AnthropicLlmClient } from './agent/anthropic-client.js';
+import { createLlmClient } from './agent/llm-factory.js';
 import { buildApp } from './app.js';
 import { SessionStore } from './chat/session-store.js';
 import { loadAgentConfig, loadPrintabilityConfig } from './config.js';
@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   await jobStore.hydrate();
 
   const app = await buildApp({
-    llm: new AnthropicLlmClient(agentConfig.model),
+    llm: createLlmClient(agentConfig),
     provider: createProvider(providerId),
     jobStore,
     sessionStore: new SessionStore(),

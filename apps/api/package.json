@@ -21,6 +21,7 @@
     "@gltf-transform/core": "^4.4.0",
     "fastify": "^5.8.5",
     "manifold-3d": "^3.5.1",
+    "openai": "^6.45.0",
     "three": "^0.184.0",
     "three-mesh-bvh": "^0.9.10",
     "zod": "^4.4.3"

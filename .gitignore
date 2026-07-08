@@ -3,8 +3,9 @@ dist/
 coverage/
 *.tsbuildinfo
 
-# runtime data (job state + mesh artifacts)
-/data/
+# runtime data (job state + mesh artifacts); DRUKAR_DATA_DIR defaults to ./data,
+# relative to whichever app's cwd runs it (e.g. apps/api/data in dev)
+data/
 
 # environment
 .env
