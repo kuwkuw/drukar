@@ -26,6 +26,12 @@ export function useChat() {
   const [isStreaming, setIsStreaming] = useState(false);
   const queryClient = useQueryClient();
 
+  // TODO(ui-visibility): richer request-processing feedback. Today the only signal between
+  // Send and the first event is the disabled button — on a slow/local model that gap is many
+  // seconds of apparent nothing. Add a "thinking…" placeholder + elapsed timer while awaiting
+  // the first chunk, and surface the job's status transitions (generating → validating →
+  // repairing) live from job_update instead of only the final report badge.
+
   const send = useCallback(
     async (message: string) => {
       setIsStreaming(true);
