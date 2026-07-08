@@ -26,18 +26,25 @@ async function main(): Promise<void> {
   const jobStore = new JobStore(dataDir);
   await jobStore.hydrate();
 
-  const app = await buildApp({
-    llm: createLlmClient(agentConfig),
-    provider: createProvider(providerId),
-    jobStore,
-    sessionStore: new SessionStore(),
-    config: printabilityConfig,
-    maxAttempts: 1 + agentConfig.maxRegenerations,
-  });
+  const app = await buildApp(
+    {
+      llm: createLlmClient(agentConfig),
+      provider: createProvider(providerId),
+      jobStore,
+      sessionStore: new SessionStore(),
+      config: printabilityConfig,
+      maxAttempts: 1 + agentConfig.maxRegenerations,
+    },
+    { logger: true },
+  );
 
   const port = Number(process.env.DRUKAR_API_PORT) || 3000;
   const host = process.env.DRUKAR_API_HOST || '0.0.0.0';
   await app.listen({ port, host });
+  app.log.info(
+    { llmProvider: agentConfig.llmProvider, model: agentConfig.model, provider: providerId, dataDir },
+    'drukar api ready',
+  );
 }
 
 main().catch((err: unknown) => {
