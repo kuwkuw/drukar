@@ -4,6 +4,12 @@ import { ReportPanel } from './components/ReportPanel';
 import { useChat } from './hooks/useChat';
 import { useJob } from './hooks/useJob';
 
+// TODO(landing-page): add a client-facing landing page that explains what Drukar does — the
+// clarify → generate → validate → repair → export value prop, an example run, and a
+// call-to-action into this workbench. First-time visitors currently drop straight into the
+// chat with no context. Since the SPA has no router yet, this likely means introducing one
+// (or a simple hash/state toggle) so "/" is the description page and the workbench lives at
+// its own route.
 export function App() {
   const chat = useChat();
   const { data: job } = useJob(chat.jobId);
