@@ -85,9 +85,11 @@ Web (static SPA): Cloudflare Pages / GitHub Pages / Netlify — all free and ade
   endpoint) + real Tripo3D generation. The API has **no auth or rate limiting**, so both keys are
   spendable by anyone who finds the endpoint; the kill-switch is flipping `DRUKAR_PROVIDER=mock`
   in the dashboard.
-- Remaining: the **web static site** (build command + publish dir + the two rewrites in
-  `render.yaml`) — until it's deployed the public surface is API-only. Then verify SSE streams
-  through the static-site rewrite proxy without buffering.
+- The web went live via a **single-service pivot** instead of the planned static site: the API
+  image also builds the SPA and serves it with `@fastify/static` + SPA fallback (`DRUKAR_WEB_DIST`,
+  see [app.ts](../../../apps/api/src/app.ts)). One container is the whole product — same-origin by
+  construction, no rewrites, no second service, and SSE never crosses a proxy. Static assets come
+  from Node rather than a CDN, which is irrelevant at MVP scale.
 - Job state is ephemeral on the free tier (resets on deploy/restart). Upgrade path if the demo
   sticks: Fly.io + volume, or a paid Render disk. `docker compose up` (the local two-container
   path) remains unverified end-to-end.

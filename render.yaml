@@ -1,19 +1,20 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# NOTE: the live services were created manually in the Render dashboard (not via
+# NOTE: the live service was created manually in the Render dashboard (not via
 # Blueprint), so this file *documents* that deployment rather than driving it.
-# It stays deployable: dashboard → New → Blueprint would recreate the same shape.
 # See docs/knowledge/features/F-007-ci-cd-and-deployment.md.
 #
-# Live API: https://drukar.onrender.com (health: /healthz)
+# Live: https://drukar.onrender.com — ONE service is the whole product: the API
+# image also builds the SPA and serves it via @fastify/static (DRUKAR_WEB_DIST),
+# so UI + API are same-origin by construction. No static site, no rewrites.
 #
 # Demo posture as deployed: real LLM (Gemini via the openai-compat provider) +
 # real Tripo3D generation. The API has no auth/rate limiting, so both keys are
 # spendable by anyone who finds the endpoint — keep them capped/free-tier, and
 # flip DRUKAR_PROVIDER=mock to stop generation spend without redeploying.
 #
-# Free-tier caveats: the API sleeps after ~15 min idle (first request cold-starts)
-# and job state is ephemeral — history resets on every deploy/restart.
+# Free-tier caveats: the service sleeps after ~15 min idle (first request
+# cold-starts) and job state is ephemeral — history resets on deploy/restart.
 
 services:
   - name: drukar
@@ -36,21 +37,3 @@ services:
         value: gemini-2.5-flash
       - key: DRUKAR_LLM_API_KEY
         sync: false # set in the Render dashboard; free-tier Gemini key
-
-  - name: drukar-web
-    type: web
-    runtime: static
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @drukar/web build
-    staticPublishPath: apps/web/dist
-    envVars:
-      - key: NODE_VERSION
-        value: '22'
-    routes:
-      # Same-origin /api proxy to the live API, mirroring apps/web/nginx.conf.
-      - type: rewrite
-        source: /api/*
-        destination: https://drukar.onrender.com/api/*
-      # SPA fallback
-      - type: rewrite
-        source: /*
-        destination: /index.html

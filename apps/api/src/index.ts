@@ -38,7 +38,7 @@ async function main(): Promise<void> {
       config: printabilityConfig,
       maxAttempts: 1 + agentConfig.maxRegenerations,
     },
-    { logger: true },
+    { logger: true, webDist: process.env.DRUKAR_WEB_DIST },
   );
 
   const port = Number(process.env.DRUKAR_API_PORT) || 3000;
