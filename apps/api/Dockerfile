@@ -5,7 +5,9 @@ WORKDIR /repo
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @drukar/api build
-RUN pnpm --filter @drukar/api --prod deploy /out
+# --legacy: pnpm v10 requires inject-workspace-packages=true without it; tsup already
+# bundles @drukar/shared into dist (noExternal), so injection semantics aren't needed.
+RUN pnpm --filter @drukar/api --prod deploy --legacy /out
 
 # Runtime stage
 FROM node:22-slim
