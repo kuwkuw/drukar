@@ -92,12 +92,13 @@ implementing code in `links`.
 | [F-004](features/F-004-agent-loop-sse.md) | Agent loop over SSE | implemented |
 | [F-005](features/F-005-landing-page.md) | Client-facing landing page | implemented |
 | [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | idea |
+| [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | idea |
 
 ### Requirements
 
 | register | count |
 |---|---|
 | [Functional (`FR-`)](requirements/functional.md) | 15 |
-| [Non-functional (`NFR-`)](requirements/non-functional.md) | 10 |
+| [Non-functional (`NFR-`)](requirements/non-functional.md) | 11 |
 
-_Next ids: business `B-004`, feature `F-007`, functional `FR-016`, non-functional `NFR-011`._
+_Next ids: business `B-004`, feature `F-008`, functional `FR-016`, non-functional `NFR-012`._

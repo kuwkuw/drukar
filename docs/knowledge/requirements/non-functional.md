@@ -53,7 +53,8 @@ Qualities and constraints — *how well*, not *what*. Each has a stable `NFR-NNN
 - **Priority:** Should · **Status:** partial
 - **Satisfied by:** — (Dockerfiles, `docker-compose.yml`) · **Traces to:** [B-003](../business/B-003-delegate-generation-own-trust.md)
 - Node >=22 pnpm workspace; production-shaped Docker images (api :3000, web :8080 via nginx).
-  **`docker compose up` has not been verified end-to-end.**
+  **`docker compose up` has not been verified end-to-end.** Hosted-deploy options are analysed
+  in [F-007](../features/F-007-ci-cd-and-deployment.md).
 
 ### NFR-008 — Observability
 - **Priority:** Should · **Status:** met
@@ -73,4 +74,11 @@ Qualities and constraints — *how well*, not *what*. Each has a stable `NFR-NNN
 - Mock + local-LLM paths make demos, development and cost-sensitive use free; provider choice bounds
   per-run spend.
 
-_Next id: `NFR-011`._
+### NFR-011 — Automated CI on every change
+- **Priority:** Should · **Status:** planned
+- **Satisfied by:** [F-007](../features/F-007-ci-cd-and-deployment.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
+- Every push/PR runs lint + typecheck + test + build automatically, so the deterministic core
+  ([NFR-004](#nfr-004--deterministic-testable-core)) is actually enforced rather than run by hand.
+  **Not yet set up** — `.github/` is empty.
+
+_Next id: `NFR-012`._
