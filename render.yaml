@@ -1,0 +1,49 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# One-time setup: Render dashboard → New → Blueprint → connect this repo.
+# Every push to main then auto-deploys both services (that's the CD).
+#
+# Demo posture (see docs/knowledge/features/F-007-ci-cd-and-deployment.md):
+# real LLM + mock generation — the conversation, validation and report are real;
+# meshes are canned samples. The API has no auth/rate limiting, so use a
+# spend-capped ANTHROPIC_API_KEY (it is set in the dashboard, never synced here).
+#
+# Free-tier caveats: the API sleeps after ~15 min idle (first request cold-starts)
+# and /data is ephemeral — job history resets on every deploy/restart.
+
+services:
+  - name: drukar-api
+    type: web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: DRUKAR_PROVIDER
+        value: mock
+      - key: DRUKAR_LLM_PROVIDER
+        value: anthropic
+      - key: DRUKAR_MODEL
+        value: claude-haiku-4-5-20251001
+      - key: ANTHROPIC_API_KEY
+        sync: false # set in the Render dashboard; use a spend-capped key
+
+  - name: drukar-web
+    type: web
+    runtime: static
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @drukar/web build
+    staticPublishPath: apps/web/dist
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+    routes:
+      # Same-origin /api proxy, mirroring apps/web/nginx.conf. If Render assigns
+      # the API a suffixed hostname (name collision), update the destination.
+      - type: rewrite
+        source: /api/*
+        destination: https://drukar-api.onrender.com/api/*
+      # SPA fallback
+      - type: rewrite
+        source: /*
+        destination: /index.html

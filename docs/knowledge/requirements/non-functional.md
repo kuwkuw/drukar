@@ -75,10 +75,10 @@ Qualities and constraints — *how well*, not *what*. Each has a stable `NFR-NNN
   per-run spend.
 
 ### NFR-011 — Automated CI on every change
-- **Priority:** Should · **Status:** planned
+- **Priority:** Should · **Status:** partial
 - **Satisfied by:** [F-007](../features/F-007-ci-cd-and-deployment.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
 - Every push/PR runs lint + typecheck + test + build automatically, so the deterministic core
   ([NFR-004](#nfr-004--deterministic-testable-core)) is actually enforced rather than run by hand.
-  **Not yet set up** — `.github/` is empty.
+  Workflow committed (`.github/workflows/ci.yml`); **flip to met after the first green run**.
 
 _Next id: `NFR-012`._

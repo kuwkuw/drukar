@@ -2,11 +2,12 @@
 id: F-007
 type: feature
 title: CI/CD and deployment
-status: idea
+status: partial
 tags: [ci, cd, deployment, ops, cost]
 related: [B-003, F-004]
 links:
-  - .github/
+  - .github/workflows/ci.yml
+  - render.yaml
   - docker-compose.yml
   - apps/api/Dockerfile
   - apps/web/Dockerfile
@@ -16,11 +17,13 @@ updated: 2026-07-09
 
 ### Summary
 
-Decision record. There is no CI today (`.github/` is empty) and no hosted deployment. This entry
-captures how to add both — optimising for free/low-cost tiers at the MVP stage — and the
-constraints that narrow the field. Analysis only — no workflow or deploy config committed yet.
+Decision record, now partially executed. Captures how to add CI and a hosted deployment —
+optimising for free/low-cost tiers at the MVP stage — and the constraints that narrow the field.
+**Built so far**: [ci.yml](../../../.github/workflows/ci.yml) (lint + typecheck + test + build on
+every push/PR) and [render.yaml](../../../render.yaml) (the Render blueprint per the recommendation
+below). Remaining: the one-time Render dashboard connect, and post-deploy verification.
 
-Satisfies (when built) [NFR-011](../requirements/non-functional.md) (CI) and advances
+Satisfies [NFR-011](../requirements/non-functional.md) (CI) and advances
 [NFR-007](../requirements/non-functional.md) (container-deployable, currently partial).
 
 ### Constraints that narrow the host choices
@@ -70,8 +73,16 @@ Web (static SPA): Cloudflare Pages / GitHub Pages / Netlify — all free and ade
 
 ### Status & gaps
 
-- `idea` — nothing committed. When built: add `.github/workflows/ci.yml`, then the chosen deploy
-  config (`render.yaml` / `fly.toml`), and flip NFR-007 → met / NFR-011 → met.
+- `partial` — CI workflow and `render.yaml` are committed. The demo posture chosen for the public
+  MVP is **real LLM + mock generation** (`DRUKAR_PROVIDER=mock`, `DRUKAR_LLM_PROVIDER=anthropic`,
+  cheap Haiku model): conversation/validation/report are real, meshes are canned samples. The API
+  has **no auth or rate limiting**, so the `ANTHROPIC_API_KEY` set in the Render dashboard must be
+  spend-capped — anything on that server is spendable by anyone.
+- Remaining manual steps: connect the repo as a Blueprint in the Render dashboard, set
+  `ANTHROPIC_API_KEY`, then verify after first deploy that (a) the API hostname matches the
+  `/api/*` rewrite destination (Render may suffix it on name collision) and (b) SSE streams
+  through the static-site rewrite proxy without buffering.
 - `docker compose up` itself is still unverified end-to-end (see NFR-007) — worth confirming before
   leaning on the same images for hosted deploy.
 - Ephemeral-disk hosts reset job state on restart; only the Fly.io path avoids this for free.
+  Upgrade path if the demo sticks: Fly.io + volume, or a paid Render disk.

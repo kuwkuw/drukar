@@ -60,6 +60,19 @@ docker compose up          # web on :8080, api on :3000
 For live runs set `ANTHROPIC_API_KEY` (agent) and optionally `DRUKAR_PROVIDER=tripo` +
 `TRIPO_API_KEY` (real 3D generation) in `.env`.
 
+## CI & deployment
+
+CI (`.github/workflows/ci.yml`) runs lint + typecheck + test + build on every push/PR.
+
+Hosted deploy is a [Render Blueprint](render.yaml): the API as a Docker web service and the web as
+a static site whose `/api/*` rewrite keeps the SPA same-origin (mirroring `apps/web/nginx.conf`).
+One-time setup: Render dashboard → New → Blueprint → connect this repo, and set a **spend-capped**
+`ANTHROPIC_API_KEY` (the public demo has no auth or rate limiting). Every push to `main` then
+auto-deploys. Demo posture: real LLM, mock generation (`DRUKAR_PROVIDER=mock`) — canned meshes,
+zero generation spend. Free-tier caveats: cold start after ~15 min idle; job history resets on
+restart (ephemeral disk). Decision analysis:
+[F-007](docs/knowledge/features/F-007-ci-cd-and-deployment.md).
+
 ## Printability pipeline standalone
 
 The pipeline is the product's IP and runs without the rest of the app:

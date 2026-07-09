@@ -92,7 +92,7 @@ implementing code in `links`.
 | [F-004](features/F-004-agent-loop-sse.md) | Agent loop over SSE | implemented |
 | [F-005](features/F-005-landing-page.md) | Client-facing landing page | implemented |
 | [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | idea |
-| [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | idea |
+| [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | partial |
 
 ### Requirements
 
