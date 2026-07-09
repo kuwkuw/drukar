@@ -90,6 +90,8 @@ implementing code in `links`.
 | [F-002](features/F-002-generation-provider-abstraction.md) | Generation provider abstraction | partial |
 | [F-003](features/F-003-llm-provider-abstraction.md) | LLM provider abstraction | implemented |
 | [F-004](features/F-004-agent-loop-sse.md) | Agent loop over SSE | implemented |
+| [F-005](features/F-005-landing-page.md) | Client-facing landing page | implemented |
+| [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | idea |
 
 ### Requirements
 
@@ -98,4 +100,4 @@ implementing code in `links`.
 | [Functional (`FR-`)](requirements/functional.md) | 15 |
 | [Non-functional (`NFR-`)](requirements/non-functional.md) | 10 |
 
-_Next ids: business `B-004`, feature `F-005`, functional `FR-016`, non-functional `NFR-011`._
+_Next ids: business `B-004`, feature `F-007`, functional `FR-016`, non-functional `NFR-011`._
