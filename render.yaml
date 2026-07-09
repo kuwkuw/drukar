@@ -1,18 +1,22 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# One-time setup: Render dashboard → New → Blueprint → connect this repo.
-# Every push to main then auto-deploys both services (that's the CD).
+# NOTE: the live services were created manually in the Render dashboard (not via
+# Blueprint), so this file *documents* that deployment rather than driving it.
+# It stays deployable: dashboard → New → Blueprint would recreate the same shape.
+# See docs/knowledge/features/F-007-ci-cd-and-deployment.md.
 #
-# Demo posture (see docs/knowledge/features/F-007-ci-cd-and-deployment.md):
-# real LLM + mock generation — the conversation, validation and report are real;
-# meshes are canned samples. The API has no auth/rate limiting, so use a
-# spend-capped ANTHROPIC_API_KEY (it is set in the dashboard, never synced here).
+# Live API: https://drukar.onrender.com (health: /healthz)
+#
+# Demo posture as deployed: real LLM (Gemini via the openai-compat provider) +
+# real Tripo3D generation. The API has no auth/rate limiting, so both keys are
+# spendable by anyone who finds the endpoint — keep them capped/free-tier, and
+# flip DRUKAR_PROVIDER=mock to stop generation spend without redeploying.
 #
 # Free-tier caveats: the API sleeps after ~15 min idle (first request cold-starts)
-# and /data is ephemeral — job history resets on every deploy/restart.
+# and job state is ephemeral — history resets on every deploy/restart.
 
 services:
-  - name: drukar-api
+  - name: drukar
     type: web
     runtime: docker
     plan: free
@@ -21,13 +25,17 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: DRUKAR_PROVIDER
-        value: mock
+        value: tripo
+      - key: TRIPO_API_KEY
+        sync: false # set in the Render dashboard
       - key: DRUKAR_LLM_PROVIDER
-        value: anthropic
+        value: openai
+      - key: DRUKAR_LLM_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai
       - key: DRUKAR_MODEL
-        value: claude-haiku-4-5-20251001
-      - key: ANTHROPIC_API_KEY
-        sync: false # set in the Render dashboard; use a spend-capped key
+        value: gemini-2.5-flash
+      - key: DRUKAR_LLM_API_KEY
+        sync: false # set in the Render dashboard; free-tier Gemini key
 
   - name: drukar-web
     type: web
@@ -38,11 +46,10 @@ services:
       - key: NODE_VERSION
         value: '22'
     routes:
-      # Same-origin /api proxy, mirroring apps/web/nginx.conf. If Render assigns
-      # the API a suffixed hostname (name collision), update the destination.
+      # Same-origin /api proxy to the live API, mirroring apps/web/nginx.conf.
       - type: rewrite
         source: /api/*
-        destination: https://drukar-api.onrender.com/api/*
+        destination: https://drukar.onrender.com/api/*
       # SPA fallback
       - type: rewrite
         source: /*

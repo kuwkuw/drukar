@@ -51,10 +51,10 @@ Qualities and constraints — *how well*, not *what*. Each has a stable `NFR-NNN
 
 ### NFR-007 — Portable, container-deployable
 - **Priority:** Should · **Status:** partial
-- **Satisfied by:** — (Dockerfiles, `docker-compose.yml`) · **Traces to:** [B-003](../business/B-003-delegate-generation-own-trust.md)
+- **Satisfied by:** [F-007](../features/F-007-ci-cd-and-deployment.md) · **Traces to:** [B-003](../business/B-003-delegate-generation-own-trust.md)
 - Node >=22 pnpm workspace; production-shaped Docker images (api :3000, web :8080 via nginx).
-  **`docker compose up` has not been verified end-to-end.** Hosted-deploy options are analysed
-  in [F-007](../features/F-007-ci-cd-and-deployment.md).
+  The **API image is verified in production** (live on Render, healthcheck + SSE chat round-trip);
+  `docker compose up` (the local two-container path, incl. the web/nginx image) remains unverified.
 
 ### NFR-008 — Observability
 - **Priority:** Should · **Status:** met

@@ -73,16 +73,21 @@ Web (static SPA): Cloudflare Pages / GitHub Pages / Netlify — all free and ade
 
 ### Status & gaps
 
-- `partial` — CI workflow and `render.yaml` are committed. The demo posture chosen for the public
-  MVP is **real LLM + mock generation** (`DRUKAR_PROVIDER=mock`, `DRUKAR_LLM_PROVIDER=anthropic`,
-  cheap Haiku model): conversation/validation/report are real, meshes are canned samples. The API
-  has **no auth or rate limiting**, so the `ANTHROPIC_API_KEY` set in the Render dashboard must be
-  spend-capped — anything on that server is spendable by anyone.
-- Remaining manual steps: connect the repo as a Blueprint in the Render dashboard, set
-  `ANTHROPIC_API_KEY`, then verify after first deploy that (a) the API hostname matches the
-  `/api/*` rewrite destination (Render may suffix it on name collision) and (b) SSE streams
+- `partial` — CI is green on every push (NFR-011 met), and the **API is live at
+  `https://drukar.onrender.com`**: `/healthz` 200, job routes answering, and a full SSE chat
+  round-trip verified in production. The service was created manually in the dashboard (not via
+  Blueprint), so `render.yaml` documents the deployment rather than driving it; deploys are
+  triggered from the dashboard.
+- Deploying surfaced and fixed a real bug the unverified-Docker gap had hidden: pnpm v10's
+  `deploy` requires `--legacy` without injected workspaces (`ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE`)
+  — the API image is now proven end-to-end in production.
+- Demo posture as deployed is **full real**: Gemini (free tier, via the `openai` provider's compat
+  endpoint) + real Tripo3D generation. The API has **no auth or rate limiting**, so both keys are
+  spendable by anyone who finds the endpoint; the kill-switch is flipping `DRUKAR_PROVIDER=mock`
+  in the dashboard.
+- Remaining: the **web static site** (build command + publish dir + the two rewrites in
+  `render.yaml`) — until it's deployed the public surface is API-only. Then verify SSE streams
   through the static-site rewrite proxy without buffering.
-- `docker compose up` itself is still unverified end-to-end (see NFR-007) — worth confirming before
-  leaning on the same images for hosted deploy.
-- Ephemeral-disk hosts reset job state on restart; only the Fly.io path avoids this for free.
-  Upgrade path if the demo sticks: Fly.io + volume, or a paid Render disk.
+- Job state is ephemeral on the free tier (resets on deploy/restart). Upgrade path if the demo
+  sticks: Fly.io + volume, or a paid Render disk. `docker compose up` (the local two-container
+  path) remains unverified end-to-end.
