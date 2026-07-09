@@ -89,10 +89,11 @@ feature(s) that implement it, **Traces to** the business idea(s) that motivate i
   (`pnpm pipeline:run <mesh>`).
 
 ### FR-014 — Client-facing product description
-- **Priority:** Should · **Status:** planned
-- **Satisfied by:** — · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
-- A landing page explaining the value proposition for first-time visitors. See `TODO(landing-page)`
-  in `apps/web/src/App.tsx`.
+- **Priority:** Should · **Status:** met
+- **Satisfied by:** [F-005](../features/F-005-landing-page.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
+- A landing page at `#/` explaining the value proposition for first-time visitors — the
+  clarify → generate → validate → repair → export pipeline, an example run, and a CTA into the
+  workbench.
 
 ### FR-015 — Manage session and job lifecycle
 - **Priority:** Should · **Status:** met
