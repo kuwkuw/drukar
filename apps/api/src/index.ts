@@ -32,6 +32,8 @@ async function main(): Promise<void> {
       provider: createProvider(providerId, {
         tripoApiKey: process.env.TRIPO_API_KEY,
         tripoModelVersion: process.env.TRIPO_MODEL_VERSION,
+        hfSpaceUrl: process.env.DRUKAR_HF_SPACE_URL,
+        hfToken: process.env.HF_TOKEN,
       }),
       jobStore,
       sessionStore: new SessionStore(),

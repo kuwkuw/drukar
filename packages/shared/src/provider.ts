@@ -30,5 +30,5 @@ export const GenOptionsSchema = z.object({
 });
 export type GenOptions = z.infer<typeof GenOptionsSchema>;
 
-export const GenerationProviderIdSchema = z.enum(['mock', 'tripo']);
+export const GenerationProviderIdSchema = z.enum(['mock', 'tripo', 'hf']);
 export type GenerationProviderId = z.infer<typeof GenerationProviderIdSchema>;

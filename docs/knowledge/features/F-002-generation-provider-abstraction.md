@@ -10,14 +10,15 @@ links:
   - apps/api/src/providers/index.ts
   - apps/api/src/providers/mock.ts
   - apps/api/src/providers/tripo.ts
-updated: 2026-07-08
+  - apps/api/src/providers/hf.ts
+updated: 2026-07-10
 ---
 
 ### Summary
 
 3D generation sits behind one interface, `GenerationProvider`, selected at boot by
-`DRUKAR_PROVIDER` (`mock` | `tripo`). Adding a backend means implementing one method; nothing in
-the agent loop or routes leaks provider-specific types.
+`DRUKAR_PROVIDER` (`mock` | `tripo` | `hf`). Adding a backend means implementing one method;
+nothing in the agent loop or routes leaks provider-specific types.
 
 ### How it works
 
@@ -39,6 +40,12 @@ factory. Implementations:
 - **`tripo`** ([tripo.ts](../../../apps/api/src/providers/tripo.ts)) — real Tripo3D client: creates
   a `text_to_model` task, polls until success, downloads the resulting GLB to a temp file. Requires
   `TRIPO_API_KEY`.
+- **`hf`** ([hf.ts](../../../apps/api/src/providers/hf.ts)) — free text-to-3D via a Hugging Face
+  gradio Space (default `hysts/Shap-E`), zero keys required; see
+  [F-006](F-006-free-mvp-generation-provider.md). Uses the gradio call protocol
+  (POST `/gradio_api/call/<api_name>` → SSE result stream → file download). `DRUKAR_HF_SPACE_URL`
+  can point it at any Space with a compatible text→Model3D endpoint; optional `HF_TOKEN` raises the
+  free ZeroGPU quota.
 
 ### Rationale
 
@@ -49,8 +56,8 @@ is demoable and testable without any paid API.
 
 ### Status & gaps
 
-- Interface, factory, mock provider, and Tripo3D provider: implemented and tested
-  (`apps/api/test/providers/mock.test.ts`, `tripo.test.ts` — the latter drives the create→poll→
-  download flow with an injected `fetch`).
+- Interface, factory, mock, Tripo3D, and HF Space providers: implemented and tested
+  (`apps/api/test/providers/mock.test.ts`, `tripo.test.ts`, `hf.test.ts` — the latter two drive
+  their HTTP flows with an injected `fetch`).
 - A future `python` provider (FastAPI + trimesh, for heavy repair) plugs in via the same interface;
   see the README and `TODO(python)`.

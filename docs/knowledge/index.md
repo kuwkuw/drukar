@@ -87,11 +87,11 @@ implementing code in `links`.
 | id | title | status |
 |---|---|---|
 | [F-001](features/F-001-printability-pipeline.md) | Printability pipeline | implemented |
-| [F-002](features/F-002-generation-provider-abstraction.md) | Generation provider abstraction | partial |
+| [F-002](features/F-002-generation-provider-abstraction.md) | Generation provider abstraction | implemented |
 | [F-003](features/F-003-llm-provider-abstraction.md) | LLM provider abstraction | implemented |
 | [F-004](features/F-004-agent-loop-sse.md) | Agent loop over SSE | implemented |
 | [F-005](features/F-005-landing-page.md) | Client-facing landing page | implemented |
-| [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | idea |
+| [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | implemented |
 | [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | partial |
 
 ### Requirements

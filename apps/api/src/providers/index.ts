@@ -1,4 +1,5 @@
 import type { GenerationProviderId } from '@drukar/shared';
+import { HfSpaceProvider } from './hf.js';
 import { MockProvider } from './mock.js';
 import { TripoProvider } from './tripo.js';
 import type { GenerationProvider } from './types.js';
@@ -6,6 +7,8 @@ import type { GenerationProvider } from './types.js';
 export interface ProviderOptions {
   tripoApiKey?: string;
   tripoModelVersion?: string;
+  hfSpaceUrl?: string;
+  hfToken?: string;
 }
 
 export function createProvider(id: GenerationProviderId, options: ProviderOptions = {}): GenerationProvider {
@@ -14,6 +17,8 @@ export function createProvider(id: GenerationProviderId, options: ProviderOption
       return new MockProvider();
     case 'tripo':
       return new TripoProvider({ apiKey: options.tripoApiKey, modelVersion: options.tripoModelVersion });
+    case 'hf':
+      return new HfSpaceProvider({ spaceUrl: options.hfSpaceUrl, hfToken: options.hfToken });
   }
 }
 
