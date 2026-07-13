@@ -41,7 +41,7 @@ across reloads, and a reloaded page refetches and re-renders the conversation. S
 
 - `implemented` — session persistence, hostile-chatId containment, and corrupt-snapshot skipping
   covered in `session-store.test.ts`; transcript projection and the resume endpoint in
-  `chat.test.ts`. UI resume verified manually.
+  `chat.test.ts`. UI resume is manual-verification territory (reload mid-conversation).
 - **Durability is bounded by the host disk**: on Render's free tier `DRUKAR_DATA_DIR` is
   ephemeral, so this survives process restarts and same-instance sleeps but not redeploys. The
   remaining step is infra, not code — a paid Render disk or Fly.io volume (see F-007 gaps).
