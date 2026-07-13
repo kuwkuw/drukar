@@ -53,7 +53,7 @@ describe('POST /api/chat', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toContain('text/event-stream');
     const events = parseSse(res.payload);
-    expect(events.some((e) => e.type === 'tool_finished' && e.ok === true)).toBe(true);
+    expect(events.some((e) => e.type === 'tool_finished' && e['ok'] === true)).toBe(true);
     expect(events.some((e) => e.type === 'job_update')).toBe(true);
     expect(events.some((e) => e.type === 'done')).toBe(true);
   });

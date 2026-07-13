@@ -76,7 +76,7 @@ export function toOpenAiTools(tools: Anthropic.Tool[]): ChatCompletionFunctionTo
     type: 'function',
     function: {
       name: tool.name,
-      description: tool.description,
+      ...(tool.description !== undefined ? { description: tool.description } : {}),
       parameters: tool.input_schema as Record<string, unknown>,
     },
   }));
@@ -114,10 +114,10 @@ export function fromFinishedCompletion(
 
 export interface OpenAiLlmClientOptions {
   model: string;
-  baseUrl?: string;
-  apiKey?: string;
+  baseUrl?: string | undefined;
+  apiKey?: string | undefined;
   /** Injectable for tests; defaults to global fetch. */
-  fetch?: typeof globalThis.fetch;
+  fetch?: typeof globalThis.fetch | undefined;
 }
 
 export class OpenAiLlmClient implements LlmClient {

@@ -5,10 +5,10 @@ import { TripoProvider } from './tripo.js';
 import type { GenerationProvider } from './types.js';
 
 export interface ProviderOptions {
-  tripoApiKey?: string;
-  tripoModelVersion?: string;
-  hfSpaceUrl?: string;
-  hfToken?: string;
+  tripoApiKey?: string | undefined;
+  tripoModelVersion?: string | undefined;
+  hfSpaceUrl?: string | undefined;
+  hfToken?: string | undefined;
 }
 
 export function createProvider(id: GenerationProviderId, options: ProviderOptions = {}): GenerationProvider {

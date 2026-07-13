@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import type Anthropic from '@anthropic-ai/sdk';
-import type { AgentEvent, GenOptions, Job, JobStatus } from '@drukar/shared';
+import { z } from 'zod';
+import type { AgentEvent, Job, JobStatus } from '@drukar/shared';
 import { GenOptionsSchema } from '@drukar/shared';
 import type { SessionStore } from '../chat/session-store.js';
 import type { PrintabilityConfig } from '../config.js';
@@ -24,17 +25,16 @@ export interface AgentLoopDeps {
   maxAttempts: number;
 }
 
-interface GenerateModelInput {
-  prompt: string;
-  printerType?: GenOptions['printerType'];
-  material?: GenOptions['material'];
-  functional?: boolean;
-  targetDimensionsMm?: GenOptions['targetDimensionsMm'];
-}
+/** Validates the LLM's tool_use payload — model output is a trust boundary like any
+ * other; a malformed call must bounce back as a tool error, not reach the provider. */
+const GenerateModelInputSchema = GenOptionsSchema.partial().extend({
+  prompt: z.string().min(1),
+});
 
 interface ToolExecResult {
   ok: boolean;
-  job: Job;
+  /** Absent when input validation failed before any job existed or was touched. */
+  job?: Job | undefined;
   summary: string;
   content: string;
 }
@@ -42,9 +42,14 @@ interface ToolExecResult {
 async function executeGenerateModel(
   rawInput: unknown,
   deps: AgentLoopDeps,
-  ctx: { chatId: string; userRequest: string; jobId: string | undefined; signal?: AbortSignal },
+  ctx: { chatId: string; userRequest: string; jobId: string | undefined; signal?: AbortSignal | undefined },
 ): Promise<ToolExecResult> {
-  const input = rawInput as GenerateModelInput;
+  const parsedInput = GenerateModelInputSchema.safeParse(rawInput);
+  if (!parsedInput.success) {
+    const message = `Invalid generate_model input: ${parsedInput.error.message}`;
+    return { ok: false, summary: message, content: JSON.stringify({ error: message }) };
+  }
+  const input = parsedInput.data;
   const options = GenOptionsSchema.parse({
     printerType: input.printerType,
     material: input.material,
@@ -155,9 +160,9 @@ export async function* runAgentLoop(
           jobId,
           signal,
         });
-        jobId = result.job.id;
+        jobId = result.job?.id ?? jobId;
         yield { type: 'tool_finished', tool: call.name, toolUseId: call.id, ok: result.ok, summary: result.summary };
-        yield { type: 'job_update', job: result.job };
+        if (result.job) yield { type: 'job_update', job: result.job };
         toolResults.push({ type: 'tool_result', tool_use_id: call.id, content: result.content, is_error: !result.ok });
       }
       history.push({ role: 'user', content: toolResults });

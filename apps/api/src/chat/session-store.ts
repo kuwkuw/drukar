@@ -5,7 +5,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 
 export interface ChatSession {
   history: Anthropic.MessageParam[];
-  jobId?: string;
+  jobId?: string | undefined;
 }
 
 /** On-disk snapshot shape; carries chatId because the filename is a hash of it. */

@@ -26,14 +26,14 @@ interface TripoTask {
 }
 
 export interface TripoProviderOptions {
-  apiKey?: string;
+  apiKey?: string | undefined;
   /** Optional Tripo model_version (e.g. "v2.5"); omitted when unset so the account default applies. */
-  modelVersion?: string;
-  baseUrl?: string;
+  modelVersion?: string | undefined;
+  baseUrl?: string | undefined;
   /** Injectable for tests; defaults to global fetch. */
-  fetchImpl?: typeof globalThis.fetch;
-  pollIntervalMs?: number;
-  timeoutMs?: number;
+  fetchImpl?: typeof globalThis.fetch | undefined;
+  pollIntervalMs?: number | undefined;
+  timeoutMs?: number | undefined;
 }
 
 const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
@@ -63,8 +63,8 @@ function urlOf(value: unknown): string | undefined {
  * GLB. Returns a local mesh path for the printability pipeline. See https://docs.tripo3d.ai.
  */
 export class TripoProvider implements GenerationProvider {
-  private readonly apiKey?: string;
-  private readonly modelVersion?: string;
+  private readonly apiKey: string | undefined;
+  private readonly modelVersion: string | undefined;
   private readonly baseUrl: string;
   private readonly fetch: typeof globalThis.fetch;
   private readonly pollIntervalMs: number;
@@ -125,7 +125,7 @@ export class TripoProvider implements GenerationProvider {
         prompt,
         ...(this.modelVersion ? { model_version: this.modelVersion } : {}),
       }),
-      signal,
+      signal: signal ?? null,
     });
     const body = await this.readEnvelope<{ task_id?: string }>(res, 'create task');
     if (!body.data?.task_id) throw new Error('Tripo create task returned no task_id');
@@ -135,12 +135,15 @@ export class TripoProvider implements GenerationProvider {
   private async pollForModel(taskId: string, signal?: AbortSignal): Promise<string> {
     const deadline = Date.now() + this.timeoutMs;
     for (;;) {
-      const res = await this.fetch(`${this.baseUrl}/task/${taskId}`, { headers: this.headers(), signal });
+      const res = await this.fetch(`${this.baseUrl}/task/${taskId}`, {
+        headers: this.headers(),
+        signal: signal ?? null,
+      });
       const body = await this.readEnvelope<TripoTask>(res, 'poll');
 
       const { status, output } = body.data;
       if (status === 'success') {
-        const modelUrl = urlOf(output?.pbr_model) ?? urlOf(output?.model);
+        const modelUrl = urlOf(output?.['pbr_model']) ?? urlOf(output?.['model']);
         if (!modelUrl) throw new Error('Tripo task succeeded but returned no model URL');
         return modelUrl;
       }
@@ -155,7 +158,7 @@ export class TripoProvider implements GenerationProvider {
   }
 
   private async download(url: string, signal?: AbortSignal): Promise<string> {
-    const res = await this.fetch(url, { signal });
+    const res = await this.fetch(url, { signal: signal ?? null });
     if (!res.ok) throw new Error(`Tripo model download failed: ${res.status} ${res.statusText}`);
     const bytes = Buffer.from(await res.arrayBuffer());
     const meshPath = join(tmpdir(), `drukar-tripo-${randomUUID()}.glb`);

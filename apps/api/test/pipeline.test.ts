@@ -56,7 +56,7 @@ describe('runPrintabilityPipeline', () => {
     const { report } = runPrintabilityPipeline(slab, defaultOptions, config);
     const wallCheck = report.checks.find((c) => c.id === 'wall_thickness');
     expect(wallCheck?.pass).toBe(false);
-    expect(wallCheck?.metrics.minThicknessMm as number).toBeLessThan(1.2);
+    expect(wallCheck?.metrics['minThicknessMm'] as number).toBeLessThan(1.2);
     expect(report.checks.find((c) => c.id === 'overhangs')?.pass).toBe(true);
   });
 });

@@ -22,8 +22,8 @@ async function main(): Promise<void> {
   const agentConfig = loadAgentConfig();
   const printabilityConfig = loadPrintabilityConfig();
   const serverConfig = loadServerConfig();
-  const providerId = GenerationProviderIdSchema.parse(process.env.DRUKAR_PROVIDER || 'mock');
-  const dataDir = process.env.DRUKAR_DATA_DIR || './data';
+  const providerId = GenerationProviderIdSchema.parse(process.env['DRUKAR_PROVIDER'] || 'mock');
+  const dataDir = process.env['DRUKAR_DATA_DIR'] || './data';
 
   const jobStore = new JobStore(dataDir);
   await jobStore.hydrate();
@@ -36,10 +36,10 @@ async function main(): Promise<void> {
     {
       llm: createLlmClient(agentConfig),
       provider: createProvider(providerId, {
-        tripoApiKey: process.env.TRIPO_API_KEY,
-        tripoModelVersion: process.env.TRIPO_MODEL_VERSION,
-        hfSpaceUrl: process.env.DRUKAR_HF_SPACE_URL,
-        hfToken: process.env.HF_TOKEN,
+        tripoApiKey: process.env['TRIPO_API_KEY'],
+        tripoModelVersion: process.env['TRIPO_MODEL_VERSION'],
+        hfSpaceUrl: process.env['DRUKAR_HF_SPACE_URL'],
+        hfToken: process.env['HF_TOKEN'],
       }),
       jobStore,
       sessionStore,
@@ -48,14 +48,14 @@ async function main(): Promise<void> {
     },
     {
       logger: true,
-      webDist: process.env.DRUKAR_WEB_DIST,
+      webDist: process.env['DRUKAR_WEB_DIST'],
       trustProxy: serverConfig.trustProxy,
       rateLimit: serverConfig.rateLimit,
     },
   );
 
-  const port = Number(process.env.DRUKAR_API_PORT) || 3000;
-  const host = process.env.DRUKAR_API_HOST || '0.0.0.0';
+  const port = Number(process.env['DRUKAR_API_PORT']) || 3000;
+  const host = process.env['DRUKAR_API_HOST'] || '0.0.0.0';
   await app.listen({ port, host });
   app.log.info(
     { llmProvider: agentConfig.llmProvider, model: agentConfig.model, provider: providerId, dataDir },

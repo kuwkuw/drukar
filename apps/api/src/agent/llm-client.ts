@@ -9,7 +9,7 @@ export interface LlmStreamParams {
   messages: Anthropic.MessageParam[];
   tools: Anthropic.Tool[];
   /** Aborts the in-flight request (e.g. the SSE client disconnected). */
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 }
 
 /** Seam between the agent loop and the LLM backend, so tests can script responses

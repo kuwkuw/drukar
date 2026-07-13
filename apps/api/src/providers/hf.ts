@@ -19,14 +19,14 @@ const DEFAULT_NUM_INFERENCE_STEPS = 64;
 
 export interface HfSpaceProviderOptions {
   /** Base URL of a gradio Space exposing a text→Model3D endpoint. */
-  spaceUrl?: string;
+  spaceUrl?: string | undefined;
   /** gradio api_name of that endpoint (default "text-to-3d", the Shap-E Space). */
-  apiName?: string;
+  apiName?: string | undefined;
   /** Optional HF token — anonymous calls work but get a smaller ZeroGPU quota. */
-  hfToken?: string;
+  hfToken?: string | undefined;
   /** Injectable for tests; defaults to global fetch. */
-  fetchImpl?: typeof globalThis.fetch;
-  timeoutMs?: number;
+  fetchImpl?: typeof globalThis.fetch | undefined;
+  timeoutMs?: number | undefined;
 }
 
 interface SseEvent {
@@ -67,7 +67,7 @@ function fileUrlOf(value: unknown, spaceUrl: string): string | undefined {
 export class HfSpaceProvider implements GenerationProvider {
   private readonly spaceUrl: string;
   private readonly apiName: string;
-  private readonly hfToken?: string;
+  private readonly hfToken: string | undefined;
   private readonly fetch: typeof globalThis.fetch;
   private readonly timeoutMs: number;
 

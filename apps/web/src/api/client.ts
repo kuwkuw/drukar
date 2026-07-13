@@ -7,7 +7,7 @@ export async function* streamChat(request: ChatRequest, signal?: AbortSignal): A
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
-    signal,
+    signal: signal ?? null,
   });
   if (!res.ok || !res.body) {
     throw new Error(`Chat request failed: ${res.status} ${res.statusText}`);

@@ -71,6 +71,27 @@ describe('runAgentLoop', () => {
     expect(last).toMatchObject({ type: 'job_update', job: { status: 'done', attempt: 2 } });
   });
 
+  it('bounces malformed tool input back as a tool error without creating a job', async () => {
+    const llm = new ScriptedLlmClient([
+      // First call is missing the required prompt; the corrected retry succeeds.
+      { toolCalls: [{ id: 't1', name: 'generate_model', input: { functional: 'yes please' } }] },
+      { toolCalls: [{ id: 't2', name: 'generate_model', input: { prompt: 'a clean vase' } }] },
+      {},
+    ]);
+
+    const events = await collect(runAgentLoop({ chatId: 'c4', message: 'make me a vase' }, { ...deps, llm }));
+
+    const finished = events.filter((e) => e.type === 'tool_finished');
+    expect(finished[0]).toMatchObject({ type: 'tool_finished', ok: false });
+    expect((finished[0] as { summary: string }).summary).toContain('Invalid generate_model input');
+    expect(finished[1]).toMatchObject({ type: 'tool_finished', ok: true });
+
+    // The failed call must not have produced a job; only the retry does.
+    const jobUpdates = events.filter((e) => e.type === 'job_update');
+    expect(jobUpdates).toHaveLength(1);
+    expect(jobUpdates[0]).toMatchObject({ type: 'job_update', job: { status: 'done', attempt: 1 } });
+  });
+
   it('asks a clarifying question when the model calls no tool', async () => {
     const llm = new ScriptedLlmClient([{ text: 'What material should I use?' }]);
 

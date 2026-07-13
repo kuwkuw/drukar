@@ -14,8 +14,11 @@ function sseResponse(body: string): Response {
 }
 
 /** Records requests and replays a scripted sequence of Responses, one per call. */
-function scriptedFetch(responses: Response[]): { fetch: typeof fetch; calls: { url: string; init?: RequestInit }[] } {
-  const calls: { url: string; init?: RequestInit }[] = [];
+function scriptedFetch(responses: Response[]): {
+  fetch: typeof fetch;
+  calls: { url: string; init?: RequestInit | undefined }[];
+} {
+  const calls: { url: string; init?: RequestInit | undefined }[] = [];
   let i = 0;
   const fetchImpl = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
     calls.push({ url: String(input), init });
@@ -48,7 +51,7 @@ describe('HfSpaceProvider', () => {
     expect(calls[0]?.url).toBe('https://hysts-shap-e.hf.space/gradio_api/call/text-to-3d');
     expect(calls[0]?.init?.method).toBe('POST');
     expect(JSON.parse(String(calls[0]?.init?.body)).data[0]).toBe('a small clean vase');
-    expect((calls[0]?.init?.headers as Record<string, string>)?.authorization).toBeUndefined();
+    expect((calls[0]?.init?.headers as Record<string, string>)?.['authorization']).toBeUndefined();
     // result stream + download
     expect(calls[1]?.url).toBe('https://hysts-shap-e.hf.space/gradio_api/call/text-to-3d/ev-1');
     expect(calls[2]?.url).toBe('https://hysts-shap-e.hf.space/gradio_api/file=/tmp/model.glb');
@@ -75,7 +78,7 @@ describe('HfSpaceProvider', () => {
     const provider = new HfSpaceProvider({ spaceUrl: '', hfToken: '', fetchImpl: fetch });
     await provider.generate('x', options);
     expect(calls[0]?.url).toBe('https://hysts-shap-e.hf.space/gradio_api/call/text-to-3d');
-    expect((calls[0]?.init?.headers as Record<string, string>)?.authorization).toBeUndefined();
+    expect((calls[0]?.init?.headers as Record<string, string>)?.['authorization']).toBeUndefined();
   });
 
   it('sends the HF token on every request when configured', async () => {
@@ -87,7 +90,7 @@ describe('HfSpaceProvider', () => {
     const provider = new HfSpaceProvider({ hfToken: 'hf_test', fetchImpl: fetch });
     await provider.generate('x', options);
     for (const call of calls) {
-      expect((call.init?.headers as Record<string, string>)?.authorization).toBe('Bearer hf_test');
+      expect((call.init?.headers as Record<string, string>)?.['authorization']).toBe('Bearer hf_test');
     }
   });
 

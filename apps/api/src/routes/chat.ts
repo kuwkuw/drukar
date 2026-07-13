@@ -8,7 +8,7 @@ import { toTranscript } from '../chat/transcript.js';
 export interface ChatRouteOptions {
   /** Per-route rate limit for POST /api/chat (the spendable route: LLM + generation per call).
    * Requires the @fastify/rate-limit plugin to be registered; ignored otherwise. */
-  rateLimit?: { max: number; timeWindowMs: number };
+  rateLimit?: { max: number; timeWindowMs: number } | undefined;
 }
 
 export function registerChatRoute(app: FastifyInstance, deps: AgentLoopDeps, options: ChatRouteOptions = {}): void {

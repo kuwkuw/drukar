@@ -10,8 +10,11 @@ function jsonResponse(body: unknown): Response {
 }
 
 /** Records requests and replays a scripted sequence of Responses, one per call. */
-function scriptedFetch(responses: Response[]): { fetch: typeof fetch; calls: { url: string; init?: RequestInit }[] } {
-  const calls: { url: string; init?: RequestInit }[] = [];
+function scriptedFetch(responses: Response[]): {
+  fetch: typeof fetch;
+  calls: { url: string; init?: RequestInit | undefined }[];
+} {
+  const calls: { url: string; init?: RequestInit | undefined }[] = [];
   let i = 0;
   const fetchImpl = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
     calls.push({ url: String(input), init });
@@ -49,7 +52,7 @@ describe('TripoProvider', () => {
     expect(calls[0]?.url).toBe('https://api.tripo3d.ai/v2/openapi/task');
     expect(calls[0]?.init?.method).toBe('POST');
     expect(JSON.parse(String(calls[0]?.init?.body))).toMatchObject({ type: 'text_to_model', prompt: 'a small clean vase' });
-    expect((calls[0]?.init?.headers as Record<string, string>)?.authorization).toBe('Bearer tsk_test');
+    expect((calls[0]?.init?.headers as Record<string, string>)?.['authorization']).toBe('Bearer tsk_test');
     // poll + download
     expect(calls[1]?.url).toBe('https://api.tripo3d.ai/v2/openapi/task/task-1');
     expect(calls[3]?.url).toBe('https://cdn.tripo/model.glb');

@@ -45,7 +45,7 @@ export function ChatPanel(props: {
   activity: ToolActivity[];
   isStreaming: boolean;
   awaitingResponse: boolean;
-  startedAt?: number;
+  startedAt?: number | undefined;
   onSend: (message: string) => void;
   onCancel: () => void;
 }) {

@@ -131,9 +131,12 @@ or routes.
 
 ## Conventions
 
-- `moduleResolution: bundler`, `verbatimModuleSyntax: true`, `noUncheckedIndexedAccess: true` —
-  all imports use explicit `.js` extensions on relative paths (see `mesh/io.ts` imports) even
-  though source is `.ts`; array/map index access must be treated as possibly-`undefined`.
+- `moduleResolution: bundler`, `verbatimModuleSyntax: true`, `noUncheckedIndexedAccess: true`,
+  `exactOptionalPropertyTypes: true`, `noPropertyAccessFromIndexSignature: true` — all imports
+  use explicit `.js` extensions on relative paths (see `mesh/io.ts` imports) even though source
+  is `.ts`; array/map index access must be treated as possibly-`undefined`; options interfaces
+  declare `prop?: T | undefined`; env access is `process.env['FOO']`. The
+  `.claude/skills/ts-coding-standards` skill documents the house TS style.
 - ESLint enforces `consistent-type-imports` and errors on unused vars (prefix with `_` to allow).
 - `TODO(python)` / `TODO` markers mark where out-of-scope-for-MVP functionality (Python repair
   backend, auth, payments, print-farm integration, G-code slicing, 3MF export, Redis/queues,

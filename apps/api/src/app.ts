@@ -21,17 +21,17 @@ export interface RateLimitOptions {
 export interface AppOptions {
   /** Fastify logger config. Off by default so tests (app.inject) stay quiet; the dev/prod
    * bootstrap in index.ts turns it on to stream request + startup logs to the console. */
-  logger?: FastifyServerOptions['logger'];
+  logger?: FastifyServerOptions['logger'] | undefined;
   /** Directory with the built web SPA (index.html + assets). When set and present, the API
    * serves it with an SPA fallback — one process serves UI + API, same-origin by construction
    * (the single-service deploy; locally the Vite dev server is used instead). */
-  webDist?: string;
+  webDist?: string | undefined;
   /** Trust X-Forwarded-For from a reverse proxy (Render, nginx) so rate limiting keys on the
    * real client IP instead of the proxy's. Only enable when actually behind a proxy. */
-  trustProxy?: boolean;
+  trustProxy?: boolean | undefined;
   /** Per-IP rate limiting. Off by default (tests build bare apps); the index.ts bootstrap
    * always enables it — the live API has no auth, so this is the only spend brake. */
-  rateLimit?: RateLimitOptions;
+  rateLimit?: RateLimitOptions | undefined;
 }
 
 export async function buildApp(deps: AppDeps, options: AppOptions = {}): Promise<FastifyInstance> {
