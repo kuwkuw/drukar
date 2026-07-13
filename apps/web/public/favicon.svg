@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Stepped "printed layers" mark: an object mid-print, bottom layers widest. -->
+  <rect width="32" height="32" rx="6" fill="#171717"/>
+  <rect x="12" y="8" width="8" height="4" rx="1" fill="#7dd3fc"/>
+  <rect x="9" y="14" width="14" height="4" rx="1" fill="#38bdf8"/>
+  <rect x="6" y="20" width="20" height="4" rx="1" fill="#0ea5e9"/>
+</svg>
