@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { GenOptions, Job } from '@drukar/shared';
-import { JobSchema } from '@drukar/shared';
+import { JobSchema, isTerminalStatus } from '@drukar/shared';
 
 export interface CreateJobInput {
   chatId?: string;
@@ -96,7 +96,13 @@ export class JobStore {
     for (const id of entries) {
       try {
         const raw = await readFile(join(this.dataDir, id, 'job.json'), 'utf8');
-        const job = JobSchema.parse(JSON.parse(raw));
+        let job = JobSchema.parse(JSON.parse(raw));
+        // Nothing is running right after boot, so a non-terminal snapshot is a stale lie —
+        // left as-is it would make the UI poll it forever.
+        if (!isTerminalStatus(job.status)) {
+          job = { ...job, status: 'failed', error: 'Interrupted by a server restart', updatedAt: new Date().toISOString() };
+          await this.persist(job);
+        }
         this.jobs.set(job.id, job);
       } catch {
         // not a job directory, or a corrupt snapshot — skip it

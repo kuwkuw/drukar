@@ -40,17 +40,34 @@ describe('JobStore', () => {
 
   it('hydrates jobs written by a previous instance from disk', async () => {
     const first = new JobStore(dataDir);
-    const job = await first.create({
+    const created = await first.create({
       userRequest: 'a bracket',
       generationPrompt: 'a bracket',
       options,
       maxAttempts: 3,
     });
+    const job = await first.update(created.id, { status: 'done' });
 
     const second = new JobStore(dataDir);
     expect(second.get(job.id)).toBeUndefined();
     await second.hydrate();
     expect(second.get(job.id)).toEqual(job);
+  });
+
+  it('hydrate fails jobs left non-terminal by a crash — nothing is running after boot', async () => {
+    const first = new JobStore(dataDir);
+    const job = await first.create({ userRequest: 'a fox', generationPrompt: 'a fox', options, maxAttempts: 3 });
+    expect(job.status).toBe('generating');
+
+    const second = new JobStore(dataDir);
+    await second.hydrate();
+    const rehydrated = second.get(job.id);
+    expect(rehydrated).toMatchObject({ status: 'failed', error: 'Interrupted by a server restart' });
+
+    // The flip is persisted, not just in-memory.
+    const third = new JobStore(dataDir);
+    await third.hydrate();
+    expect(third.get(job.id)?.status).toBe('failed');
   });
 
   it('hydrate is a no-op when the data dir does not exist yet', async () => {

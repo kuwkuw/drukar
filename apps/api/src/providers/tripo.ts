@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { GenOptions } from '@drukar/shared';
+import { sleep } from '../util/sleep.js';
 import type { GenerationProvider, GenerationResult } from './types.js';
 
 const DEFAULT_BASE_URL = 'https://api.tripo3d.ai/v2/openapi';
@@ -35,19 +36,6 @@ export interface TripoProviderOptions {
   pollIntervalMs?: number | undefined;
   timeoutMs?: number | undefined;
 }
-
-const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const timer = setTimeout(() => resolve(), ms);
-    signal?.addEventListener(
-      'abort',
-      () => {
-        clearTimeout(timer);
-        reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'));
-      },
-      { once: true },
-    );
-  });
 
 /** Extract a URL from an output field that may be a bare string or a `{ url }` object. */
 function urlOf(value: unknown): string | undefined {

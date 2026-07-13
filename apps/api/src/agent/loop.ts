@@ -2,7 +2,8 @@ import { join } from 'node:path';
 import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import type { AgentEvent, Job, JobStatus } from '@drukar/shared';
-import { GenOptionsSchema } from '@drukar/shared';
+import { GenOptionsSchema, isTerminalStatus } from '@drukar/shared';
+import { sleep } from '../util/sleep.js';
 import type { SessionStore } from '../chat/session-store.js';
 import type { PrintabilityConfig } from '../config.js';
 import type { JobStore } from '../jobs/store.js';
@@ -16,6 +17,18 @@ import { AGENT_TOOLS } from './tools.js';
 /** Defensive cap on tool round-trips within a single user turn. */
 const MAX_AGENT_STEPS = 8;
 
+/** Backoff before re-calling a rate-limited/unavailable LLM. Free-tier providers (Gemini,
+ * anonymous HF) 429 routinely mid-conversation; waiting out a minute beats dying on step 2. */
+const LLM_RETRY_DELAYS_MS = [2_000, 8_000, 20_000];
+
+/** Both SDKs throw APIError-shaped objects carrying the HTTP status. */
+function retryableLlmStatus(err: unknown): number | undefined {
+  if (typeof err !== 'object' || err === null || !('status' in err)) return undefined;
+  const status = (err as { status?: unknown }).status;
+  if (typeof status !== 'number') return undefined;
+  return status === 429 || status === 408 || status >= 500 ? status : undefined;
+}
+
 export interface AgentLoopDeps {
   llm: LlmClient;
   provider: GenerationProvider;
@@ -23,6 +36,8 @@ export interface AgentLoopDeps {
   sessionStore: SessionStore;
   config: PrintabilityConfig;
   maxAttempts: number;
+  /** Test seam: override the LLM retry backoff schedule. */
+  retryDelaysMs?: number[] | undefined;
 }
 
 /** Validates the LLM's tool_use payload — model output is a trust boundary like any
@@ -125,21 +140,35 @@ export async function* runAgentLoop(
   deps: AgentLoopDeps,
   signal?: AbortSignal,
 ): AsyncGenerator<AgentEvent> {
-  try {
-    const session = deps.sessionStore.get(input.chatId);
-    const history: Anthropic.MessageParam[] = [...session.history, { role: 'user', content: input.message }];
-    let jobId = session.jobId;
+  const session = deps.sessionStore.get(input.chatId);
+  const history: Anthropic.MessageParam[] = [...session.history, { role: 'user', content: input.message }];
+  let jobId = session.jobId;
 
+  try {
     for (let step = 0; step < MAX_AGENT_STEPS && !signal?.aborted; step++) {
       let text = '';
       let assistantContent: Anthropic.ContentBlock[] = [];
 
-      for await (const event of deps.llm.streamMessage({ system: SYSTEM_PROMPT, messages: history, tools: AGENT_TOOLS, signal })) {
-        if (event.type === 'text_delta') {
-          text += event.text;
-          yield { type: 'text_chunk', text: event.text };
-        } else {
-          assistantContent = event.content;
+      // Retry rate-limited/unavailable LLM calls with backoff — but only while nothing
+      // has been streamed to the client this step, so a retry can't duplicate text.
+      const retryDelays = deps.retryDelaysMs ?? LLM_RETRY_DELAYS_MS;
+      for (let retry = 0; ; retry++) {
+        try {
+          for await (const event of deps.llm.streamMessage({ system: SYSTEM_PROMPT, messages: history, tools: AGENT_TOOLS, signal })) {
+            if (event.type === 'text_delta') {
+              text += event.text;
+              yield { type: 'text_chunk', text: event.text };
+            } else {
+              assistantContent = event.content;
+            }
+          }
+          break;
+        } catch (err) {
+          const delay = retryDelays[retry];
+          if (text !== '' || delay === undefined || signal?.aborted || retryableLlmStatus(err) === undefined) {
+            throw err;
+          }
+          await sleep(delay, signal);
         }
       }
 
@@ -171,6 +200,23 @@ export async function* runAgentLoop(
     await deps.sessionStore.save(input.chatId, { history, jobId });
     yield { type: 'done', jobId };
   } catch (err) {
-    yield { type: 'error', message: err instanceof Error ? err.message : String(err) };
+    const message =
+      retryableLlmStatus(err) === 429
+        ? 'The LLM provider is rate-limiting requests (HTTP 429). Wait a minute, then resend your message.'
+        : err instanceof Error
+          ? err.message
+          : String(err);
+
+    // A job left non-terminal here would poll forever in the UI — nothing will advance it.
+    if (jobId) {
+      const job = deps.jobStore.get(jobId);
+      if (job && !isTerminalStatus(job.status)) {
+        const updated = await deps.jobStore.update(jobId, { status: 'failed', error: `Agent interrupted: ${message}` });
+        yield { type: 'job_update', job: updated };
+      }
+    }
+    // Keep the transcript so the user's retry continues the conversation instead of resetting it.
+    await deps.sessionStore.save(input.chatId, { history, jobId });
+    yield { type: 'error', message };
   }
 }
