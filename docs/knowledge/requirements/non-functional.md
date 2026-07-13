@@ -26,10 +26,11 @@ Qualities and constraints — *how well*, not *what*. Each has a stable `NFR-NNN
   backend touches no agent/route code.
 
 ### NFR-003 — First-try print success is the north-star metric
-- **Priority:** Must · **Status:** planned
-- **Satisfied by:** [F-001](../features/F-001-printability-pipeline.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
-- "% of first-try successful prints" is the metric the system optimizes. **Not yet instrumented**;
-  target value TBD.
+- **Priority:** Must · **Status:** met
+- **Satisfied by:** [F-001](../features/F-001-printability-pipeline.md), [F-009](../features/F-009-print-outcome-feedback.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
+- "% of first-try successful prints" is the metric the system optimizes. Instrumented via user
+  print-outcome feedback and `GET /api/metrics` (F-009); target value still TBD — set once real
+  reports accumulate.
 
 ### NFR-004 — Deterministic, testable core
 - **Priority:** Must · **Status:** met

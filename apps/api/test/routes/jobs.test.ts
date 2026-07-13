@@ -97,3 +97,84 @@ describe('GET /api/jobs/:id', () => {
     expect(get.statusCode).toBe(404);
   });
 });
+
+describe('print feedback and metrics', () => {
+  let dataDir: string;
+  let app: FastifyInstance;
+  let jobStore: JobStore;
+
+  const seedJob = async (status: 'done' | 'failed'): Promise<string> => {
+    const job = await jobStore.create({
+      userRequest: 'a vase',
+      generationPrompt: 'a vase',
+      options: { printerType: 'fdm', material: 'pla', functional: false },
+      maxAttempts: 3,
+    });
+    await jobStore.update(job.id, { status });
+    return job.id;
+  };
+
+  beforeEach(async () => {
+    dataDir = await mkdtemp(join(tmpdir(), 'drukar-feedback-route-'));
+    jobStore = new JobStore(dataDir);
+    app = await buildApp({
+      llm: new ScriptedLlmClient([]),
+      provider: new MockProvider(),
+      jobStore,
+      sessionStore: new SessionStore(),
+      config: testPrintabilityConfig,
+      maxAttempts: 3,
+    });
+  });
+
+  afterEach(async () => {
+    await app.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  it('records feedback on a done job and allows re-reporting', async () => {
+    const id = await seedJob('done');
+
+    const yes = await app.inject({ method: 'POST', url: `/api/jobs/${id}/feedback`, payload: { printed: true } });
+    expect(yes.statusCode).toBe(200);
+    expect(yes.json()).toMatchObject({ feedback: { printed: true } });
+
+    const no = await app.inject({ method: 'POST', url: `/api/jobs/${id}/feedback`, payload: { printed: false } });
+    expect(no.json()).toMatchObject({ feedback: { printed: false } });
+  });
+
+  it('rejects feedback on a non-done job with 409', async () => {
+    const id = await seedJob('failed');
+    const res = await app.inject({ method: 'POST', url: `/api/jobs/${id}/feedback`, payload: { printed: true } });
+    expect(res.statusCode).toBe(409);
+  });
+
+  it('rejects an invalid body with 400 and an unknown job with 404', async () => {
+    const id = await seedJob('done');
+    const bad = await app.inject({ method: 'POST', url: `/api/jobs/${id}/feedback`, payload: { printed: 'yep' } });
+    expect(bad.statusCode).toBe(400);
+
+    const missing = await app.inject({ method: 'POST', url: '/api/jobs/nope/feedback', payload: { printed: true } });
+    expect(missing.statusCode).toBe(404);
+  });
+
+  it('aggregates outcomes in GET /api/metrics', async () => {
+    const a = await seedJob('done');
+    const b = await seedJob('done');
+    await seedJob('done'); // done but never reported
+    await seedJob('failed'); // failed jobs don't count toward jobsDone
+
+    await app.inject({ method: 'POST', url: `/api/jobs/${a}/feedback`, payload: { printed: true } });
+    await app.inject({ method: 'POST', url: `/api/jobs/${b}/feedback`, payload: { printed: false } });
+
+    const res = await app.inject({ method: 'GET', url: '/api/metrics' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ jobsDone: 3, reported: 2, printed: 1, successRate: 0.5 });
+  });
+
+  it('reports a null success rate before any feedback exists', async () => {
+    await seedJob('done');
+    const res = await app.inject({ method: 'GET', url: '/api/metrics' });
+    expect(res.json()).toMatchObject({ jobsDone: 1, reported: 0, printed: 0, successRate: null });
+  });
+});

@@ -1,12 +1,21 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { ChatPanel } from './ChatPanel';
 import { ModelViewer } from './ModelViewer';
 import { ReportPanel } from './ReportPanel';
+import { sendPrintFeedback } from '../api/client';
 import { useChat } from '../hooks/useChat';
 import { useJob } from '../hooks/useJob';
 
 export function Workbench() {
   const chat = useChat();
   const { data: job } = useJob(chat.jobId);
+  const queryClient = useQueryClient();
+
+  const reportOutcome = async (printed: boolean) => {
+    if (!job) return;
+    const updated = await sendPrintFeedback(job.id, printed);
+    queryClient.setQueryData(['job', updated.id], updated);
+  };
 
   return (
     <div className="flex h-full">
@@ -49,7 +58,11 @@ export function Workbench() {
           <ModelViewer job={job} />
         </section>
         <section className="min-h-0 flex-[2]">
-          <ReportPanel job={job} onDelete={() => void chat.deleteCurrentJob().catch(() => {})} />
+          <ReportPanel
+            job={job}
+            onDelete={() => void chat.deleteCurrentJob().catch(() => {})}
+            onReportOutcome={(printed) => void reportOutcome(printed).catch(() => {})}
+          />
         </section>
       </main>
     </div>

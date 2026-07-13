@@ -38,6 +38,17 @@ export async function fetchJob(id: string): Promise<Job> {
   return JobSchema.parse(await res.json());
 }
 
+/** Report whether the physical print succeeded ("did it print?"); returns the updated job. */
+export async function sendPrintFeedback(id: string, printed: boolean): Promise<Job> {
+  const res = await fetch(`/api/jobs/${id}/feedback`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ printed }),
+  });
+  if (!res.ok) throw new Error(`Feedback failed: ${res.status}`);
+  return JobSchema.parse(await res.json());
+}
+
 /** Drop a chat's server-side transcript. Best-effort — a failure shouldn't block a UI reset. */
 export async function deleteChat(chatId: string): Promise<void> {
   await fetch(`/api/chat/${chatId}`, { method: 'DELETE' }).catch(() => {});

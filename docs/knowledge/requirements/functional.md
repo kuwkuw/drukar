@@ -102,4 +102,10 @@ feature(s) that implement it, **Traces to** the business idea(s) that motivate i
   individual job with its artifacts, and clear all jobs. Backed by `DELETE /api/chat/:chatId`,
   `DELETE /api/jobs/:id`, and `DELETE /api/jobs`.
 
-_Next id: `FR-016`._
+### FR-016 — Capture print outcomes and expose the success metric
+- **Priority:** Must · **Status:** met
+- **Satisfied by:** [F-009](../features/F-009-print-outcome-feedback.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
+- The user reports whether a completed job actually printed (`POST /api/jobs/:id/feedback`, one
+  click in the report panel); `GET /api/metrics` aggregates reports into the first-try success rate.
+
+_Next id: `FR-017`._

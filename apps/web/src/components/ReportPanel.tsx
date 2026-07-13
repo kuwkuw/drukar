@@ -28,7 +28,42 @@ function CheckRow({ check }: { check: CheckResult }) {
   );
 }
 
-export function ReportPanel({ job, onDelete }: { job: Job | undefined; onDelete?: () => void }) {
+function FeedbackPrompt({ job, onReportOutcome }: { job: Job; onReportOutcome: (printed: boolean) => void }) {
+  if (job.feedback) {
+    return (
+      <p className="mb-3 text-xs text-neutral-400">
+        {job.feedback.printed ? '✅ You reported this printed successfully.' : '❌ You reported this failed to print.'}
+      </p>
+    );
+  }
+  return (
+    <div className="mb-3 flex items-center gap-2 rounded border border-neutral-800 px-3 py-2">
+      <span className="text-xs text-neutral-300">Did it print successfully?</span>
+      <button
+        className="rounded bg-emerald-800 px-2 py-0.5 text-xs font-medium hover:bg-emerald-700"
+        onClick={() => onReportOutcome(true)}
+      >
+        Yes
+      </button>
+      <button
+        className="rounded bg-red-900 px-2 py-0.5 text-xs font-medium hover:bg-red-800"
+        onClick={() => onReportOutcome(false)}
+      >
+        No
+      </button>
+    </div>
+  );
+}
+
+export function ReportPanel({
+  job,
+  onDelete,
+  onReportOutcome,
+}: {
+  job: Job | undefined;
+  onDelete?: () => void;
+  onReportOutcome?: (printed: boolean) => void;
+}) {
   if (!job) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-neutral-600">
@@ -69,6 +104,8 @@ export function ReportPanel({ job, onDelete }: { job: Job | undefined; onDelete?
       </div>
 
       {job.error && <p className="mb-3 text-xs text-red-400">{job.error}</p>}
+
+      {job.status === 'done' && onReportOutcome && <FeedbackPrompt job={job} onReportOutcome={onReportOutcome} />}
 
       {report ? (
         <>

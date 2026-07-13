@@ -94,12 +94,13 @@ implementing code in `links`.
 | [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | implemented |
 | [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | partial |
 | [F-008](features/F-008-abuse-and-spend-protection.md) | Abuse and spend protection | implemented |
+| [F-009](features/F-009-print-outcome-feedback.md) | Print outcome feedback and metrics | implemented |
 
 ### Requirements
 
 | register | count |
 |---|---|
-| [Functional (`FR-`)](requirements/functional.md) | 15 |
+| [Functional (`FR-`)](requirements/functional.md) | 16 |
 | [Non-functional (`NFR-`)](requirements/non-functional.md) | 12 |
 
-_Next ids: business `B-004`, feature `F-009`, functional `FR-016`, non-functional `NFR-013`._
+_Next ids: business `B-004`, feature `F-010`, functional `FR-017`, non-functional `NFR-013`._

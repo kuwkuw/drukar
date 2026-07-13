@@ -13,7 +13,7 @@ export interface CreateJobInput {
 }
 
 export type JobPatch = Partial<
-  Pick<Job, 'status' | 'generationPrompt' | 'options' | 'attempt' | 'report' | 'error' | 'artifacts'>
+  Pick<Job, 'status' | 'generationPrompt' | 'options' | 'attempt' | 'report' | 'feedback' | 'error' | 'artifacts'>
 >;
 
 /** In-memory job map backed by a `<jobId>/job.json` snapshot per job under `dataDir`. */
@@ -50,6 +50,10 @@ export class JobStore {
 
   get(id: string): Job | undefined {
     return this.jobs.get(id);
+  }
+
+  list(): Job[] {
+    return [...this.jobs.values()];
   }
 
   async update(id: string, patch: JobPatch): Promise<Job> {
