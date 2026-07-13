@@ -132,13 +132,16 @@ export class OpenAiLlmClient implements LlmClient {
   }
 
   async *streamMessage(params: LlmStreamParams): AsyncGenerator<LlmStreamEvent> {
-    const stream = await this.client.chat.completions.create({
-      model: this.options.model,
-      max_tokens: MAX_TOKENS,
-      stream: true,
-      messages: toOpenAiMessages(params.system, params.messages),
-      tools: toOpenAiTools(params.tools),
-    });
+    const stream = await this.client.chat.completions.create(
+      {
+        model: this.options.model,
+        max_tokens: MAX_TOKENS,
+        stream: true,
+        messages: toOpenAiMessages(params.system, params.messages),
+        tools: toOpenAiTools(params.tools),
+      },
+      { signal: params.signal },
+    );
 
     let text = '';
     let finishReason: string | null = null;

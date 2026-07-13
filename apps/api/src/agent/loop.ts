@@ -42,7 +42,7 @@ interface ToolExecResult {
 async function executeGenerateModel(
   rawInput: unknown,
   deps: AgentLoopDeps,
-  ctx: { chatId: string; userRequest: string; jobId: string | undefined },
+  ctx: { chatId: string; userRequest: string; jobId: string | undefined; signal?: AbortSignal },
 ): Promise<ToolExecResult> {
   const input = rawInput as GenerateModelInput;
   const options = GenOptionsSchema.parse({
@@ -64,7 +64,7 @@ async function executeGenerateModel(
       });
 
   try {
-    const generated = await deps.provider.generate(input.prompt, options);
+    const generated = await deps.provider.generate(input.prompt, options, ctx.signal);
     const mesh = await loadMesh(generated.meshPath);
     const { mesh: finalMesh, report } = runPrintabilityPipeline(mesh, options, deps.config);
 
@@ -101,7 +101,11 @@ async function executeGenerateModel(
       }),
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = ctx.signal?.aborted
+      ? 'Cancelled: client disconnected'
+      : err instanceof Error
+        ? err.message
+        : String(err);
     job = await deps.jobStore.update(job.id, { status: 'failed', error: message });
     return { ok: false, job, summary: `Generation failed: ${message}`, content: JSON.stringify({ error: message }) };
   }
@@ -114,17 +118,18 @@ function isToolUseBlock(block: Anthropic.ContentBlock): block is Anthropic.ToolU
 export async function* runAgentLoop(
   input: { chatId: string; message: string },
   deps: AgentLoopDeps,
+  signal?: AbortSignal,
 ): AsyncGenerator<AgentEvent> {
   try {
     const session = deps.sessionStore.get(input.chatId);
     const history: Anthropic.MessageParam[] = [...session.history, { role: 'user', content: input.message }];
     let jobId = session.jobId;
 
-    for (let step = 0; step < MAX_AGENT_STEPS; step++) {
+    for (let step = 0; step < MAX_AGENT_STEPS && !signal?.aborted; step++) {
       let text = '';
       let assistantContent: Anthropic.ContentBlock[] = [];
 
-      for await (const event of deps.llm.streamMessage({ system: SYSTEM_PROMPT, messages: history, tools: AGENT_TOOLS })) {
+      for await (const event of deps.llm.streamMessage({ system: SYSTEM_PROMPT, messages: history, tools: AGENT_TOOLS, signal })) {
         if (event.type === 'text_delta') {
           text += event.text;
           yield { type: 'text_chunk', text: event.text };
@@ -148,6 +153,7 @@ export async function* runAgentLoop(
           chatId: input.chatId,
           userRequest: input.message,
           jobId,
+          signal,
         });
         jobId = result.job.id;
         yield { type: 'tool_finished', tool: call.name, toolUseId: call.id, ok: result.ok, summary: result.summary };

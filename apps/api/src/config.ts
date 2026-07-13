@@ -40,6 +40,28 @@ export function loadPrintabilityConfig(): PrintabilityConfig {
   };
 }
 
+export interface ServerConfig {
+  /** Per-IP rate limits; undefined = disabled (DRUKAR_RATE_LIMIT_MAX=0). */
+  rateLimit?: { max: number; chatMax: number; timeWindowMs: number };
+  /** Trust X-Forwarded-For (set when behind a reverse proxy, e.g. Render). */
+  trustProxy: boolean;
+}
+
+export function loadServerConfig(): ServerConfig {
+  const max = envNumber('DRUKAR_RATE_LIMIT_MAX', 300);
+  return {
+    rateLimit:
+      max > 0
+        ? {
+            max,
+            chatMax: envNumber('DRUKAR_CHAT_RATE_LIMIT_MAX', 10),
+            timeWindowMs: envNumber('DRUKAR_RATE_LIMIT_WINDOW_MS', 60_000),
+          }
+        : undefined,
+    trustProxy: ['1', 'true'].includes(process.env.DRUKAR_TRUST_PROXY ?? ''),
+  };
+}
+
 /** api-internal (selected via env, never crosses the api/web boundary), so not in @drukar/shared. */
 export const LlmProviderIdSchema = z.enum(['anthropic', 'openai']);
 export type LlmProviderId = z.infer<typeof LlmProviderIdSchema>;

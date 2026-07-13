@@ -9,9 +9,10 @@
 # so UI + API are same-origin by construction. No static site, no rewrites.
 #
 # Demo posture as deployed: real LLM (Gemini via the openai-compat provider) +
-# real Tripo3D generation. The API has no auth/rate limiting, so both keys are
-# spendable by anyone who finds the endpoint — keep them capped/free-tier, and
-# flip DRUKAR_PROVIDER=mock to stop generation spend without redeploying.
+# real Tripo3D generation. The API has no auth, but per-IP rate limiting is on
+# by default (see .env.example) and DRUKAR_TRUST_PROXY keys the limits on the
+# real client IP behind Render's proxy. Keys stay capped/free-tier regardless,
+# and flipping DRUKAR_PROVIDER=mock stops generation spend without redeploying.
 #
 # Free-tier caveats: the service sleeps after ~15 min idle (first request
 # cold-starts) and job state is ephemeral — history resets on deploy/restart.
@@ -37,3 +38,5 @@ services:
         value: gemini-2.5-flash
       - key: DRUKAR_LLM_API_KEY
         sync: false # set in the Render dashboard; free-tier Gemini key
+      - key: DRUKAR_TRUST_PROXY
+        value: 'true' # behind Render's proxy; rate-limit on the real client IP

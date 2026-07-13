@@ -6,5 +6,6 @@ export interface GenerationResult {
 }
 
 export interface GenerationProvider {
-  generate(prompt: string, options: GenOptions): Promise<GenerationResult>;
+  /** `signal` aborts in-flight work (e.g. the SSE client disconnected) — stop and throw. */
+  generate(prompt: string, options: GenOptions, signal?: AbortSignal): Promise<GenerationResult>;
 }

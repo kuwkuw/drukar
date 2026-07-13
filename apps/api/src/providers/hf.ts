@@ -80,8 +80,9 @@ export class HfSpaceProvider implements GenerationProvider {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
-  async generate(prompt: string, _options: GenOptions): Promise<GenerationResult> {
-    const deadline = AbortSignal.timeout(this.timeoutMs);
+  async generate(prompt: string, _options: GenOptions, signal?: AbortSignal): Promise<GenerationResult> {
+    const timeout = AbortSignal.timeout(this.timeoutMs);
+    const deadline = signal ? AbortSignal.any([timeout, signal]) : timeout;
     const eventId = await this.createCall(prompt, deadline);
     const fileUrl = await this.awaitResult(eventId, deadline);
     return this.download(fileUrl, deadline);
@@ -126,7 +127,8 @@ export class HfSpaceProvider implements GenerationProvider {
     try {
       body = await res.text();
     } catch (err) {
-      if (signal.aborted) {
+      // Only label timeouts; a caller-initiated abort (client disconnect) propagates as-is.
+      if (signal.aborted && (signal.reason as Error | undefined)?.name === 'TimeoutError') {
         throw new Error(`HF Space generation timed out after ${this.timeoutMs}ms`, { cause: err });
       }
       throw err;

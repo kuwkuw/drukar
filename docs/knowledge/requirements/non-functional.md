@@ -81,4 +81,10 @@ Qualities and constraints — *how well*, not *what*. Each has a stable `NFR-NNN
   ([NFR-004](#nfr-004--deterministic-testable-core)) is actually enforced rather than run by hand.
   `.github/workflows/ci.yml`; first run green on 2026-07-09.
 
-_Next id: `NFR-012`._
+### NFR-012 — Abuse and spend resistance
+- **Priority:** Must · **Status:** met
+- **Satisfied by:** [F-008](../features/F-008-abuse-and-spend-protection.md) · **Traces to:** [B-003](../business/B-003-delegate-generation-own-trust.md)
+- The unauthenticated public API bounds worst-case spend: per-IP rate limits (stricter on the
+  chat route) and cancellation of in-flight LLM/generation work when the client disconnects.
+
+_Next id: `NFR-013`._

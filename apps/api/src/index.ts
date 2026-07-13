@@ -2,7 +2,7 @@ import { GenerationProviderIdSchema } from '@drukar/shared';
 import { createLlmClient } from './agent/llm-factory.js';
 import { buildApp } from './app.js';
 import { SessionStore } from './chat/session-store.js';
-import { loadAgentConfig, loadPrintabilityConfig } from './config.js';
+import { loadAgentConfig, loadPrintabilityConfig, loadServerConfig } from './config.js';
 import { JobStore } from './jobs/store.js';
 import { createProvider } from './providers/index.js';
 
@@ -20,6 +20,7 @@ for (const envPath of ['.env', '../../.env']) {
 async function main(): Promise<void> {
   const agentConfig = loadAgentConfig();
   const printabilityConfig = loadPrintabilityConfig();
+  const serverConfig = loadServerConfig();
   const providerId = GenerationProviderIdSchema.parse(process.env.DRUKAR_PROVIDER || 'mock');
   const dataDir = process.env.DRUKAR_DATA_DIR || './data';
 
@@ -40,7 +41,12 @@ async function main(): Promise<void> {
       config: printabilityConfig,
       maxAttempts: 1 + agentConfig.maxRegenerations,
     },
-    { logger: true, webDist: process.env.DRUKAR_WEB_DIST },
+    {
+      logger: true,
+      webDist: process.env.DRUKAR_WEB_DIST,
+      trustProxy: serverConfig.trustProxy,
+      rateLimit: serverConfig.rateLimit,
+    },
   );
 
   const port = Number(process.env.DRUKAR_API_PORT) || 3000;

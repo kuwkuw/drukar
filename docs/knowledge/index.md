@@ -93,12 +93,13 @@ implementing code in `links`.
 | [F-005](features/F-005-landing-page.md) | Client-facing landing page | implemented |
 | [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | implemented |
 | [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | partial |
+| [F-008](features/F-008-abuse-and-spend-protection.md) | Abuse and spend protection | implemented |
 
 ### Requirements
 
 | register | count |
 |---|---|
 | [Functional (`FR-`)](requirements/functional.md) | 15 |
-| [Non-functional (`NFR-`)](requirements/non-functional.md) | 11 |
+| [Non-functional (`NFR-`)](requirements/non-functional.md) | 12 |
 
-_Next ids: business `B-004`, feature `F-008`, functional `FR-016`, non-functional `NFR-012`._
+_Next ids: business `B-004`, feature `F-009`, functional `FR-016`, non-functional `NFR-013`._

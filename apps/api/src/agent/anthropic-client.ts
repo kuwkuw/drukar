@@ -9,13 +9,16 @@ export class AnthropicLlmClient implements LlmClient {
   constructor(private readonly model: string) {}
 
   async *streamMessage(params: LlmStreamParams): AsyncGenerator<LlmStreamEvent> {
-    const stream = this.client.messages.stream({
-      model: this.model,
-      max_tokens: MAX_TOKENS,
-      system: params.system,
-      messages: params.messages,
-      tools: params.tools,
-    });
+    const stream = this.client.messages.stream(
+      {
+        model: this.model,
+        max_tokens: MAX_TOKENS,
+        system: params.system,
+        messages: params.messages,
+        tools: params.tools,
+      },
+      { signal: params.signal },
+    );
 
     for await (const event of stream) {
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {

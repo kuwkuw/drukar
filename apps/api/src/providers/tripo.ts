@@ -36,7 +36,18 @@ export interface TripoProviderOptions {
   timeoutMs?: number;
 }
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(), ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'));
+      },
+      { once: true },
+    );
+  });
 
 /** Extract a URL from an output field that may be a bare string or a `{ url }` object. */
 function urlOf(value: unknown): string | undefined {
@@ -68,13 +79,13 @@ export class TripoProvider implements GenerationProvider {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
-  async generate(prompt: string, _options: GenOptions): Promise<GenerationResult> {
+  async generate(prompt: string, _options: GenOptions, signal?: AbortSignal): Promise<GenerationResult> {
     if (!this.apiKey) {
       throw new Error('Tripo3D provider requires TRIPO_API_KEY — set it or use DRUKAR_PROVIDER=mock');
     }
-    const taskId = await this.createTask(prompt);
-    const modelUrl = await this.pollForModel(taskId);
-    const meshPath = await this.download(modelUrl);
+    const taskId = await this.createTask(prompt, signal);
+    const modelUrl = await this.pollForModel(taskId, signal);
+    const meshPath = await this.download(modelUrl, signal);
     return { meshPath, format: 'glb' };
   }
 
@@ -105,7 +116,7 @@ export class TripoProvider implements GenerationProvider {
     return body;
   }
 
-  private async createTask(prompt: string): Promise<string> {
+  private async createTask(prompt: string, signal?: AbortSignal): Promise<string> {
     const res = await this.fetch(`${this.baseUrl}/task`, {
       method: 'POST',
       headers: this.headers(),
@@ -114,16 +125,17 @@ export class TripoProvider implements GenerationProvider {
         prompt,
         ...(this.modelVersion ? { model_version: this.modelVersion } : {}),
       }),
+      signal,
     });
     const body = await this.readEnvelope<{ task_id?: string }>(res, 'create task');
     if (!body.data?.task_id) throw new Error('Tripo create task returned no task_id');
     return body.data.task_id;
   }
 
-  private async pollForModel(taskId: string): Promise<string> {
+  private async pollForModel(taskId: string, signal?: AbortSignal): Promise<string> {
     const deadline = Date.now() + this.timeoutMs;
     for (;;) {
-      const res = await this.fetch(`${this.baseUrl}/task/${taskId}`, { headers: this.headers() });
+      const res = await this.fetch(`${this.baseUrl}/task/${taskId}`, { headers: this.headers(), signal });
       const body = await this.readEnvelope<TripoTask>(res, 'poll');
 
       const { status, output } = body.data;
@@ -138,12 +150,12 @@ export class TripoProvider implements GenerationProvider {
       if (Date.now() >= deadline) {
         throw new Error(`Tripo generation timed out after ${this.timeoutMs}ms (last status: ${status})`);
       }
-      await sleep(this.pollIntervalMs);
+      await sleep(this.pollIntervalMs, signal);
     }
   }
 
-  private async download(url: string): Promise<string> {
-    const res = await this.fetch(url);
+  private async download(url: string, signal?: AbortSignal): Promise<string> {
+    const res = await this.fetch(url, { signal });
     if (!res.ok) throw new Error(`Tripo model download failed: ${res.status} ${res.statusText}`);
     const bytes = Buffer.from(await res.arrayBuffer());
     const meshPath = join(tmpdir(), `drukar-tripo-${randomUUID()}.glb`);

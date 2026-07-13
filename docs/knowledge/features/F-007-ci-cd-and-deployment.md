@@ -82,9 +82,10 @@ Web (static SPA): Cloudflare Pages / GitHub Pages / Netlify — all free and ade
   `deploy` requires `--legacy` without injected workspaces (`ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE`)
   — the API image is now proven end-to-end in production.
 - Demo posture as deployed is **full real**: Gemini (free tier, via the `openai` provider's compat
-  endpoint) + real Tripo3D generation. The API has **no auth or rate limiting**, so both keys are
-  spendable by anyone who finds the endpoint; the kill-switch is flipping `DRUKAR_PROVIDER=mock`
-  in the dashboard.
+  endpoint) + real Tripo3D generation. The API has **no auth**, but per-IP rate limiting and
+  client-disconnect cancellation now bound worst-case spend
+  ([F-008](F-008-abuse-and-spend-protection.md)); the kill-switch remains flipping
+  `DRUKAR_PROVIDER=mock` in the dashboard.
 - The web went live via a **single-service pivot** instead of the planned static site: the API
   image also builds the SPA and serves it with `@fastify/static` + SPA fallback (`DRUKAR_WEB_DIST`,
   see [app.ts](../../../apps/api/src/app.ts)). One container is the whole product — same-origin by
