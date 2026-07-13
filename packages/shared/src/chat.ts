@@ -17,6 +17,15 @@ export const ChatRequestSchema = z.object({
 });
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 
+/** Displayable transcript of a chat, served by GET /api/chat/:chatId so a reloaded
+ * client can resume its conversation (tool plumbing is filtered out server-side). */
+export const ChatTranscriptSchema = z.object({
+  chatId: z.string(),
+  messages: z.array(ChatMessageSchema),
+  jobId: z.string().optional(),
+});
+export type ChatTranscript = z.infer<typeof ChatTranscriptSchema>;
+
 /** Events the agent loop yields; the SSE route pipes them verbatim. */
 export const AgentEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('text_chunk'), text: z.string() }),

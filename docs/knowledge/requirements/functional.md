@@ -108,4 +108,10 @@ feature(s) that implement it, **Traces to** the business idea(s) that motivate i
 - The user reports whether a completed job actually printed (`POST /api/jobs/:id/feedback`, one
   click in the report panel); `GET /api/metrics` aggregates reports into the first-try success rate.
 
-_Next id: `FR-017`._
+### FR-017 — Conversations survive restarts and reloads
+- **Priority:** Should · **Status:** met
+- **Satisfied by:** [F-010](../features/F-010-durable-chat-sessions.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
+- Chat transcripts persist server-side alongside jobs, and a reloaded browser resumes its
+  conversation (same chat id, transcript refetched) instead of starting from amnesia.
+
+_Next id: `FR-018`._

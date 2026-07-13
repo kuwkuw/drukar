@@ -95,12 +95,13 @@ implementing code in `links`.
 | [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | partial |
 | [F-008](features/F-008-abuse-and-spend-protection.md) | Abuse and spend protection | implemented |
 | [F-009](features/F-009-print-outcome-feedback.md) | Print outcome feedback and metrics | implemented |
+| [F-010](features/F-010-durable-chat-sessions.md) | Durable chat sessions and resume | implemented |
 
 ### Requirements
 
 | register | count |
 |---|---|
-| [Functional (`FR-`)](requirements/functional.md) | 16 |
+| [Functional (`FR-`)](requirements/functional.md) | 17 |
 | [Non-functional (`NFR-`)](requirements/non-functional.md) | 12 |
 
-_Next ids: business `B-004`, feature `F-010`, functional `FR-017`, non-functional `NFR-013`._
+_Next ids: business `B-004`, feature `F-011`, functional `FR-018`, non-functional `NFR-013`._

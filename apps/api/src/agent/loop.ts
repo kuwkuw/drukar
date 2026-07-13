@@ -163,7 +163,7 @@ export async function* runAgentLoop(
       history.push({ role: 'user', content: toolResults });
     }
 
-    deps.sessionStore.save(input.chatId, { history, jobId });
+    await deps.sessionStore.save(input.chatId, { history, jobId });
     yield { type: 'done', jobId };
   } catch (err) {
     yield { type: 'error', message: err instanceof Error ? err.message : String(err) };

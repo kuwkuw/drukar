@@ -72,16 +72,12 @@ export class JobStore {
     return existed;
   }
 
-  /** Wipes all jobs from memory and removes every job dir under dataDir (keeps dataDir itself). */
+  /** Wipes all jobs from memory and removes their dirs. Only touches dirs of jobs it owns —
+   * dataDir is shared (e.g. the session store keeps its snapshots in a sibling subdir). */
   async clear(): Promise<void> {
+    const ids = [...this.jobs.keys()];
     this.jobs.clear();
-    let entries: string[];
-    try {
-      entries = await readdir(this.dataDir);
-    } catch {
-      return;
-    }
-    await Promise.all(entries.map((entry) => rm(join(this.dataDir, entry), { recursive: true, force: true })));
+    await Promise.all(ids.map((id) => rm(join(this.dataDir, id), { recursive: true, force: true })));
   }
 
   private async persist(job: Job): Promise<void> {

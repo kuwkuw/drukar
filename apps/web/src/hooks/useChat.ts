@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { clearJobs, deleteChat, deleteJob, streamChat } from '../api/client';
+import { clearJobs, deleteChat, deleteJob, fetchTranscript, streamChat } from '../api/client';
 
 export interface ChatBubble {
   id: number;
@@ -18,8 +18,20 @@ export interface ToolActivity {
 
 let nextBubbleId = 0;
 
+/** The chat id survives reloads so the server's persisted session can be resumed. */
+const CHAT_ID_KEY = 'drukar-chat-id';
+
+function loadOrCreateChatId(): string {
+  const existing = localStorage.getItem(CHAT_ID_KEY);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  localStorage.setItem(CHAT_ID_KEY, id);
+  return id;
+}
+
 export function useChat() {
-  const chatIdRef = useRef<string>(crypto.randomUUID());
+  // Runs on every render but only the first value is kept; subsequent calls are cheap reads.
+  const chatIdRef = useRef<string>(loadOrCreateChatId());
   const [messages, setMessages] = useState<ChatBubble[]>([]);
   const [activity, setActivity] = useState<ToolActivity[]>([]);
   const [jobId, setJobId] = useState<string>();
@@ -38,11 +50,32 @@ export function useChat() {
 
   const cancel = useCallback(() => abortRef.current?.abort(), []);
 
+  // Resume a persisted conversation after a reload. Only fills an untouched UI —
+  // if the user already sent something before this resolves, their turn wins.
+  useEffect(() => {
+    let cancelled = false;
+    fetchTranscript(chatIdRef.current)
+      .then((transcript) => {
+        if (cancelled || transcript.messages.length === 0) return;
+        setMessages((m) =>
+          m.length > 0
+            ? m
+            : transcript.messages.map((msg) => ({ id: nextBubbleId++, role: msg.role, text: msg.content })),
+        );
+        if (transcript.jobId) setJobId((current) => current ?? transcript.jobId);
+      })
+      .catch(() => {}); // no transcript, no resume — never block a fresh chat
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   /** Reset to a fresh conversation: stop any stream, drop the server transcript, clear the UI. */
   const newChat = useCallback(() => {
     abortRef.current?.abort();
     void deleteChat(chatIdRef.current);
     chatIdRef.current = crypto.randomUUID();
+    localStorage.setItem(CHAT_ID_KEY, chatIdRef.current);
     setMessages([]);
     setActivity([]);
     setJobId(undefined);

@@ -74,9 +74,10 @@ Three-package pnpm workspace:
   run the whole app via `app.inject` with fakes); `index.ts` is the env-driven bootstrap. Holds:
   the SSE chat route (`routes/chat.ts`) driving the agent loop (`agent/loop.ts`, async generator
   yielding `AgentEvent`s, one `generate_model` tool, capped at 8 steps/turn), job + artifact
-  routes (`routes/jobs.ts`), the printability pipeline (`mesh/`), a `JobStore` (in-memory +
-  `job.json` snapshots under `DRUKAR_DATA_DIR`, rehydrated on boot) and a memory-only
-  `SessionStore` for chat transcripts (lost on restart — jobs survive, conversations don't).
+  routes (`routes/jobs.ts`), the printability pipeline (`mesh/`), and two disk-snapshot stores
+  rehydrated on boot: a `JobStore` (`<jobId>/job.json` under `DRUKAR_DATA_DIR`) and a
+  `SessionStore` for chat transcripts (`sessions/<hash>.json`; the browser keeps its chat id in
+  localStorage and resumes via `GET /api/chat/:chatId`).
   Two independent provider axes, each one env-selected switch: the LLM driving the conversation
   (`agent/llm-factory.ts`: `anthropic` | `openai`-compatible, via `DRUKAR_LLM_PROVIDER`) and the
   3D generator (`providers/index.ts`, via `DRUKAR_PROVIDER`). When `DRUKAR_WEB_DIST` is set,

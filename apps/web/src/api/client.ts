@@ -1,5 +1,5 @@
-import type { AgentEvent, ChatRequest, Job } from '@drukar/shared';
-import { AgentEventSchema, JobSchema } from '@drukar/shared';
+import type { AgentEvent, ChatRequest, ChatTranscript, Job } from '@drukar/shared';
+import { AgentEventSchema, ChatTranscriptSchema, JobSchema } from '@drukar/shared';
 
 /** POST /api/chat and yield parsed SSE frames. EventSource can't POST, so we read the stream by hand. */
 export async function* streamChat(request: ChatRequest, signal?: AbortSignal): AsyncGenerator<AgentEvent> {
@@ -47,6 +47,13 @@ export async function sendPrintFeedback(id: string, printed: boolean): Promise<J
   });
   if (!res.ok) throw new Error(`Feedback failed: ${res.status}`);
   return JobSchema.parse(await res.json());
+}
+
+/** Fetch a chat's displayable transcript; empty for unknown chats (nothing to resume). */
+export async function fetchTranscript(chatId: string): Promise<ChatTranscript> {
+  const res = await fetch(`/api/chat/${chatId}`);
+  if (!res.ok) throw new Error(`Transcript fetch failed: ${res.status}`);
+  return ChatTranscriptSchema.parse(await res.json());
 }
 
 /** Drop a chat's server-side transcript. Best-effort — a failure shouldn't block a UI reset. */

@@ -72,6 +72,60 @@ describe('POST /api/chat', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it('serves a displayable transcript with tool plumbing filtered out', async () => {
+    const sessionStore = new SessionStore();
+    await sessionStore.save('chat-r', {
+      history: [
+        { role: 'user', content: 'make me a vase' },
+        {
+          role: 'assistant',
+          content: [
+            { type: 'text', text: 'Generating now.' },
+            { type: 'tool_use', id: 't1', name: 'generate_model', input: { prompt: 'a vase' } },
+          ],
+        },
+        { role: 'user', content: [{ type: 'tool_result', tool_use_id: 't1', content: '{"pass":true}' }] },
+        { role: 'assistant', content: [{ type: 'text', text: 'Done — printable on the first attempt.' }] },
+      ],
+      jobId: 'job-9',
+    });
+    app = await buildApp({
+      llm: new ScriptedLlmClient([]),
+      provider: new MockProvider(),
+      jobStore: new JobStore(dataDir),
+      sessionStore,
+      config: testPrintabilityConfig,
+      maxAttempts: 3,
+    });
+
+    const res = await app.inject({ method: 'GET', url: '/api/chat/chat-r' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      chatId: 'chat-r',
+      jobId: 'job-9',
+      messages: [
+        { role: 'user', content: 'make me a vase' },
+        { role: 'assistant', content: 'Generating now.' },
+        { role: 'assistant', content: 'Done — printable on the first attempt.' },
+      ],
+    });
+  });
+
+  it('returns an empty transcript for an unknown chat', async () => {
+    app = await buildApp({
+      llm: new ScriptedLlmClient([]),
+      provider: new MockProvider(),
+      jobStore: new JobStore(dataDir),
+      sessionStore: new SessionStore(),
+      config: testPrintabilityConfig,
+      maxAttempts: 3,
+    });
+
+    const res = await app.inject({ method: 'GET', url: '/api/chat/never-seen' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ chatId: 'never-seen', messages: [] });
+  });
+
   it('deletes a chat session', async () => {
     const sessionStore = new SessionStore();
     sessionStore.save('chat-x', { history: [{ role: 'user', content: 'hi' }] });

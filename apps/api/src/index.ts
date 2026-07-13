@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { GenerationProviderIdSchema } from '@drukar/shared';
 import { createLlmClient } from './agent/llm-factory.js';
 import { buildApp } from './app.js';
@@ -26,6 +27,10 @@ async function main(): Promise<void> {
 
   const jobStore = new JobStore(dataDir);
   await jobStore.hydrate();
+  // Sessions persist alongside jobs so a restart/deploy doesn't keep a job while
+  // forgetting the conversation that produced it.
+  const sessionStore = new SessionStore(join(dataDir, 'sessions'));
+  await sessionStore.hydrate();
 
   const app = await buildApp(
     {
@@ -37,7 +42,7 @@ async function main(): Promise<void> {
         hfToken: process.env.HF_TOKEN,
       }),
       jobStore,
-      sessionStore: new SessionStore(),
+      sessionStore,
       config: printabilityConfig,
       maxAttempts: 1 + agentConfig.maxRegenerations,
     },
