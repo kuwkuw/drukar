@@ -72,9 +72,10 @@ export class HfSpaceProvider implements GenerationProvider {
   private readonly timeoutMs: number;
 
   constructor(options: HfSpaceProviderOptions = {}) {
-    this.spaceUrl = (options.spaceUrl ?? DEFAULT_SPACE_URL).replace(/\/+$/, '');
-    this.apiName = options.apiName ?? DEFAULT_API_NAME;
-    this.hfToken = options.hfToken;
+    // `||`, not `??`: env-sourced options arrive as '' when the .env line is present but blank.
+    this.spaceUrl = (options.spaceUrl || DEFAULT_SPACE_URL).replace(/\/+$/, '');
+    this.apiName = options.apiName || DEFAULT_API_NAME;
+    this.hfToken = options.hfToken || undefined;
     this.fetch = options.fetchImpl ?? globalThis.fetch;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }

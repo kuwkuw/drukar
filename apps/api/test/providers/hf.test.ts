@@ -65,6 +65,19 @@ describe('HfSpaceProvider', () => {
     expect(calls[2]?.url).toBe('https://my-space.hf.space/gradio_api/file=/tmp/out.glb');
   });
 
+  it('falls back to the default Space when env-sourced options are empty strings', async () => {
+    // A blank `DRUKAR_HF_SPACE_URL=` / `HF_TOKEN=` line in .env yields '', not undefined.
+    const { fetch, calls } = scriptedFetch([
+      jsonResponse({ event_id: 'ev-0' }),
+      sseResponse('event: complete\ndata: [{"url": "https://cdn.hf/model.glb"}]\n\n'),
+      new Response(new Uint8Array([1]), { status: 200 }),
+    ]);
+    const provider = new HfSpaceProvider({ spaceUrl: '', hfToken: '', fetchImpl: fetch });
+    await provider.generate('x', options);
+    expect(calls[0]?.url).toBe('https://hysts-shap-e.hf.space/gradio_api/call/text-to-3d');
+    expect((calls[0]?.init?.headers as Record<string, string>)?.authorization).toBeUndefined();
+  });
+
   it('sends the HF token on every request when configured', async () => {
     const { fetch, calls } = scriptedFetch([
       jsonResponse({ event_id: 'ev-3' }),
