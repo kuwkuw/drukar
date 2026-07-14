@@ -12,7 +12,18 @@ const ARTIFACT_CONTENT_TYPES: Record<string, string> = {
   'preview.glb': 'model/gltf-binary',
 };
 
+/** Newest jobs the list endpoint returns; the dashboard needs recency, not an archive. */
+const JOB_LIST_LIMIT = 200;
+
 export function registerJobsRoute(app: FastifyInstance, deps: { jobStore: JobStore }): void {
+  // Recent jobs, newest first — the dashboard's data source.
+  app.get('/api/jobs', async () => {
+    return deps.jobStore
+      .list()
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, JOB_LIST_LIMIT);
+  });
+
   app.get('/api/jobs/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     const job = deps.jobStore.get(id);

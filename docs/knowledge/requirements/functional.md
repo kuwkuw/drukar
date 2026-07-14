@@ -114,4 +114,10 @@ feature(s) that implement it, **Traces to** the business idea(s) that motivate i
 - Chat transcripts persist server-side alongside jobs, and a reloaded browser resumes its
   conversation (same chat id, transcript refetched) instead of starting from amnesia.
 
-_Next id: `FR-018`._
+### FR-018 — Visualize request and job processing
+- **Priority:** Could · **Status:** met
+- **Satisfied by:** [F-011](../features/F-011-jobs-dashboard.md) · **Traces to:** [B-001](../business/B-001-first-try-print-guarantee.md)
+- A dashboard shows the first-try success metric, per-check failure shares, and a recent-jobs
+  table (status, attempts, feedback, duration), polling live.
+
+_Next id: `FR-019`._

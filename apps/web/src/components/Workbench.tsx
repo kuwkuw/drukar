@@ -28,6 +28,12 @@ export function Workbench() {
             <span className="font-normal text-neutral-500">— text to print-ready 3D model</span>
           </h1>
           <div className="flex shrink-0 gap-2">
+            <a
+              className="rounded border border-neutral-700 px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800"
+              href="#/dashboard"
+            >
+              Dashboard
+            </a>
             <button
               className="rounded border border-neutral-700 px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800"
               onClick={chat.newChat}

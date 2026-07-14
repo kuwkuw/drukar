@@ -1,5 +1,5 @@
-import type { AgentEvent, ChatRequest, ChatTranscript, Job } from '@drukar/shared';
-import { AgentEventSchema, ChatTranscriptSchema, JobSchema } from '@drukar/shared';
+import type { AgentEvent, ChatRequest, ChatTranscript, Job, PrintMetrics } from '@drukar/shared';
+import { AgentEventSchema, ChatTranscriptSchema, JobSchema, PrintMetricsSchema } from '@drukar/shared';
 
 /** POST /api/chat and yield parsed SSE frames. EventSource can't POST, so we read the stream by hand. */
 export async function* streamChat(request: ChatRequest, signal?: AbortSignal): AsyncGenerator<AgentEvent> {
@@ -36,6 +36,20 @@ export async function fetchJob(id: string): Promise<Job> {
   const res = await fetch(`/api/jobs/${id}`);
   if (!res.ok) throw new Error(`Job fetch failed: ${res.status}`);
   return JobSchema.parse(await res.json());
+}
+
+/** Recent jobs, newest first (dashboard). */
+export async function fetchJobs(): Promise<Job[]> {
+  const res = await fetch('/api/jobs');
+  if (!res.ok) throw new Error(`Jobs fetch failed: ${res.status}`);
+  return JobSchema.array().parse(await res.json());
+}
+
+/** Aggregate print-outcome metrics (dashboard). */
+export async function fetchMetrics(): Promise<PrintMetrics> {
+  const res = await fetch('/api/metrics');
+  if (!res.ok) throw new Error(`Metrics fetch failed: ${res.status}`);
+  return PrintMetricsSchema.parse(await res.json());
 }
 
 /** Report whether the physical print succeeded ("did it print?"); returns the updated job. */

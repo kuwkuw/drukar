@@ -96,12 +96,13 @@ implementing code in `links`.
 | [F-008](features/F-008-abuse-and-spend-protection.md) | Abuse and spend protection | implemented |
 | [F-009](features/F-009-print-outcome-feedback.md) | Print outcome feedback and metrics | implemented |
 | [F-010](features/F-010-durable-chat-sessions.md) | Durable chat sessions and resume | implemented |
+| [F-011](features/F-011-jobs-dashboard.md) | Jobs and metrics dashboard | implemented |
 
 ### Requirements
 
 | register | count |
 |---|---|
-| [Functional (`FR-`)](requirements/functional.md) | 17 |
+| [Functional (`FR-`)](requirements/functional.md) | 18 |
 | [Non-functional (`NFR-`)](requirements/non-functional.md) | 12 |
 
-_Next ids: business `B-004`, feature `F-011`, functional `FR-018`, non-functional `NFR-013`._
+_Next ids: business `B-004`, feature `F-012`, functional `FR-019`, non-functional `NFR-013`._

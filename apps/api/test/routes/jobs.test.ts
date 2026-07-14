@@ -172,6 +172,21 @@ describe('print feedback and metrics', () => {
     expect(res.json()).toEqual({ jobsDone: 3, reported: 2, printed: 1, successRate: 0.5 });
   });
 
+  it('lists jobs newest-first via GET /api/jobs', async () => {
+    const a = await seedJob('done');
+    // createdAt has millisecond resolution; guarantee distinct timestamps.
+    await new Promise((r) => setTimeout(r, 5));
+    const b = await seedJob('failed');
+
+    const res = await app.inject({ method: 'GET', url: '/api/jobs' });
+    expect(res.statusCode).toBe(200);
+    const jobs = res.json() as { id: string }[];
+    expect(jobs.map((j) => j.id)).toHaveLength(2);
+    // b was created last, so it comes first.
+    expect(jobs[0]?.id).toBe(b);
+    expect(jobs[1]?.id).toBe(a);
+  });
+
   it('reports a null success rate before any feedback exists', async () => {
     await seedJob('done');
     const res = await app.inject({ method: 'GET', url: '/api/metrics' });
