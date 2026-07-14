@@ -1,8 +1,8 @@
 import { DoubleSide, Ray, Vector3 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import type { CheckResult, MeshRegion } from '@drukar/shared';
-import type { RawMesh } from './raw.js';
-import { bbox, bboxDims, faceCentroid, faceNormal, faceVerts, triCount } from './raw.js';
+import type { RawMesh, Vec3 } from './raw.js';
+import { bbox, bboxDims, dot, faceArea, faceCentroid, faceNormal, faceVerts, triCount } from './raw.js';
 import type { EdgeTopology } from './topology.js';
 import { toBufferGeometry } from './three.js';
 import { computeOverhangs } from './orient.js';
@@ -10,6 +10,8 @@ import { computeOverhangs } from './orient.js';
 const MAX_REGIONS = 20;
 /** Nudge the ray origin off the surface so it doesn't immediately self-intersect. */
 const RAY_EPS_MM = 1e-3;
+/** Hits closer than this are coincident-surface artifacts (doubled faces), not walls. */
+const MIN_MEASURABLE_WALL_MM = 0.01;
 
 export function manifoldCheck(
   topology: EdgeTopology,
@@ -52,11 +54,18 @@ export function manifoldCheck(
 }
 
 /**
- * Minimum wall thickness, measured by casting a ray from each face centroid
- * along its inward normal and taking the distance to the nearest opposing
- * surface — the standard "shoot-through" thickness estimate.
+ * Wall thickness, measured by casting a ray from each face centroid along its
+ * inward normal to the surface where the ray *exits* the solid (a back-facing
+ * hit). Front-facing hits are interior junk (doubled shells, floating fins) and
+ * near-coincident hits are duplicated-surface artifacts; both are skipped, so
+ * neither can zero the measurement.
+ *
+ * Pass/fail is decided by the *area share* of thin faces, not the absolute
+ * minimum: tapering features (ear tips, sharp creases) legitimately measure
+ * near zero at their rims yet print fine, so the mesh fails only when faces
+ * thinner than `minWallMm` cover more than `thinAreaMaxRatio` of its surface.
  */
-export function wallThicknessCheck(mesh: RawMesh, minWallMm: number): CheckResult {
+export function wallThicknessCheck(mesh: RawMesh, minWallMm: number, thinAreaMaxRatio: number): CheckResult {
   const tris = triCount(mesh);
   if (tris === 0) {
     return {
@@ -71,34 +80,64 @@ export function wallThicknessCheck(mesh: RawMesh, minWallMm: number): CheckResul
 
   const bvh = new MeshBVH(toBufferGeometry(mesh));
   let minThicknessMm = Infinity;
+  let totalAreaMm2 = 0;
+  let thinAreaMm2 = 0;
   const thin: { region: MeshRegion; thicknessMm: number }[] = [];
 
   for (let t = 0; t < tris; t++) {
     const [a, b, c] = faceVerts(mesh, t);
     const n = faceNormal(a, b, c);
     if (!n) continue;
+    const areaMm2 = faceArea(a, b, c);
+    totalAreaMm2 += areaMm2;
+
     const centroid = faceCentroid(a, b, c);
+    const inward: Vec3 = [-n[0], -n[1], -n[2]];
     const origin = new Vector3(
-      centroid[0] - n[0] * RAY_EPS_MM,
-      centroid[1] - n[1] * RAY_EPS_MM,
-      centroid[2] - n[2] * RAY_EPS_MM,
+      centroid[0] + inward[0] * RAY_EPS_MM,
+      centroid[1] + inward[1] * RAY_EPS_MM,
+      centroid[2] + inward[2] * RAY_EPS_MM,
     );
-    const direction = new Vector3(-n[0], -n[1], -n[2]);
-    const hit = bvh.raycastFirst(new Ray(origin, direction), DoubleSide);
-    if (!hit) continue;
-    const thicknessMm = hit.distance;
+    const hits = bvh
+      .raycast(new Ray(origin, new Vector3(...inward)), DoubleSide)
+      .sort((h1, h2) => h1.distance - h2.distance);
+
+    let thicknessMm: number | undefined;
+    for (const hit of hits) {
+      if (hit.distance < MIN_MEASURABLE_WALL_MM) continue; // coincident-surface artifact
+      if (hit.faceIndex != null) {
+        const hitNormal = faceNormal(...faceVerts(mesh, hit.faceIndex));
+        // Front-facing hit: the ray runs into another outside, not out through a wall.
+        if (hitNormal && dot(hitNormal, inward) <= 0) continue;
+      }
+      thicknessMm = hit.distance;
+      break;
+    }
+    if (thicknessMm === undefined) continue;
+
     if (thicknessMm < minThicknessMm) minThicknessMm = thicknessMm;
     if (thicknessMm < minWallMm) {
+      thinAreaMm2 += areaMm2;
       thin.push({ region: { location: centroid, faceIndices: [t], value: thicknessMm }, thicknessMm });
     }
   }
 
   const measured = Number.isFinite(minThicknessMm);
+  const thinAreaRatio = totalAreaMm2 > 0 ? thinAreaMm2 / totalAreaMm2 : 0;
   thin.sort((x, y) => x.thicknessMm - y.thicknessMm);
   const regions = thin.slice(0, MAX_REGIONS).map((x) => x.region);
-  const pass = measured ? minThicknessMm >= minWallMm : true; // open mesh: the manifold check owns that failure
+  const pass = measured ? thinAreaRatio <= thinAreaMaxRatio : true; // open mesh: the manifold check owns that failure
+  const thinPct = (thinAreaRatio * 100).toFixed(1);
+  const limitPct = (thinAreaMaxRatio * 100).toFixed(0);
+
   const warnings: string[] = [];
   if (!measured) warnings.push('Could not measure wall thickness (no opposing surface found for any face).');
+  if (measured && pass && thin.length > 0) {
+    warnings.push(
+      `${thinPct}% of the surface measures under ${minWallMm}mm (thinnest ${minThicknessMm.toFixed(2)}mm) — ` +
+        'tapering tips and edges usually print, but can be fragile.',
+    );
+  }
 
   return {
     id: 'wall_thickness',
@@ -108,9 +147,13 @@ export function wallThicknessCheck(mesh: RawMesh, minWallMm: number): CheckResul
       minThicknessMm: measured ? Number(minThicknessMm.toFixed(3)) : -1,
       thresholdMm: minWallMm,
       thinFaceCount: thin.length,
+      thinAreaRatio: Number(thinAreaRatio.toFixed(4)),
+      thinAreaMaxRatio,
     },
     details: measured
-      ? `Thinnest measured wall is ${minThicknessMm.toFixed(2)}mm (minimum ${minWallMm}mm).`
+      ? pass
+        ? `Thinnest measured wall is ${minThicknessMm.toFixed(2)}mm; ${thinPct}% of the surface is under the ${minWallMm}mm minimum (limit ${limitPct}%).`
+        : `${thinPct}% of the surface is thinner than ${minWallMm}mm, above the ${limitPct}% limit (thinnest ${minThicknessMm.toFixed(2)}mm).`
       : 'No opposing surfaces detected to measure wall thickness.',
     warnings,
     regions: regions.length > 0 ? regions : undefined,

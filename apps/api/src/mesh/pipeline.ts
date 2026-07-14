@@ -144,7 +144,7 @@ export function runPrintabilityPipeline(
   const minWallMm = config.minWallMmByPrinterType[options.printerType];
   const checks = [
     manifoldCheck(finalTopology, consistency.orientable, volume),
-    wallThicknessCheck(mesh, minWallMm),
+    wallThicknessCheck(mesh, minWallMm, config.thinWallMaxRatio),
     overhangsCheck(mesh, config.overhangDeg, config.overhangMaxRatio),
     buildVolumeCheck(mesh, config.buildVolumeMm),
   ];

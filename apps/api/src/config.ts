@@ -3,6 +3,9 @@ import type { PrinterType } from '@drukar/shared';
 
 export interface PrintabilityConfig {
   minWallMmByPrinterType: Record<PrinterType, number>;
+  /** Max share of surface area (0..1) allowed to measure thinner than the minimum wall —
+   * tapering tips/edges legitimately measure near zero, so the absolute minimum can't decide. */
+  thinWallMaxRatio: number;
   /** Faces tilted more than this many degrees from vertical count as overhangs. */
   overhangDeg: number;
   /** Maximum share of overhang surface area before the overhang check fails (0..1). */
@@ -34,6 +37,7 @@ export function loadPrintabilityConfig(): PrintabilityConfig {
       fdm: envNumber('DRUKAR_MIN_WALL_MM_FDM', 1.2),
       resin: envNumber('DRUKAR_MIN_WALL_MM_RESIN', 0.8),
     },
+    thinWallMaxRatio: envNumber('DRUKAR_THIN_WALL_MAX_RATIO', 0.05),
     overhangDeg: envNumber('DRUKAR_OVERHANG_DEG', 50),
     overhangMaxRatio: envNumber('DRUKAR_OVERHANG_MAX_RATIO', 0.3),
     buildVolumeMm: parseBuildVolume(process.env['DRUKAR_BUILD_VOLUME'], [220, 220, 250]),

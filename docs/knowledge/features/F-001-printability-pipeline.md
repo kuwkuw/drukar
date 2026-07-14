@@ -12,7 +12,7 @@ links:
   - apps/api/src/mesh/orient.ts
   - apps/api/src/cli/run-pipeline.ts
   - packages/shared/src/printability.ts
-updated: 2026-07-08
+updated: 2026-07-14
 ---
 
 ### Summary
@@ -38,7 +38,16 @@ API keys.
 6. **Auto-orient** ([orient.ts](../../../apps/api/src/mesh/orient.ts)) to minimize unsupported
    overhang area.
 7. **Check** ([checks.ts](../../../apps/api/src/mesh/checks.ts)) — manifold/watertight, min wall
-   thickness (BVH ray shoot-through), overhang ratio, build-volume fit — into `CheckResult`s.
+   thickness, overhang ratio, build-volume fit — into `CheckResult`s.
+
+**Wall thickness measurement** (reworked 2026-07-14 after a field false positive — a solid
+generated figurine read "0.00mm"): a BVH ray from each face centroid along the inward normal,
+taking the distance to the surface the ray *exits* through (back-facing hit) — front-facing hits
+(interior junk, doubled shells) and near-coincident hits (duplicated faces) are skipped. Pass is
+decided by the **area share** of thin faces (`DRUKAR_THIN_WALL_MAX_RATIO`, default 5%), not the
+absolute minimum: tapering tips and sharp creases legitimately measure near zero at their rims
+yet print fine, so only extended thin regions fail; small thin features pass with a fragility
+warning.
 
 The report shape (`PrintabilityReport`, `CheckResult`, `AppliedFix`, ...) lives in
 [packages/shared](../../../packages/shared/src/printability.ts) so api and web share one contract.
@@ -55,7 +64,8 @@ Keeping the pipeline a pure, framework-free function makes it independently test
 ### Status & gaps
 
 - Implemented and covered by `apps/api/test/pipeline.test.ts` (clean/holed/broken samples,
-  rescale, build-volume, thin-wall).
+  rescale, build-volume, thin-wall) and `apps/api/test/checks.test.ts` (wall-measurement edge
+  cases: duplicated faces, interior junk, small-thin-feature warning vs dominant-thin failure).
 - Light repair only. Heavy repair (voxel remeshing) is deliberately out of scope — the fallback is
   regeneration, and a future `TODO(python)` service would slot in if the success metric demands it.
 - Thresholds (`MAX_FILL_LOOP_VERTS`, overhang degrees, min wall) are config/const, not yet tuned
