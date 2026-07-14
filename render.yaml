@@ -1,7 +1,10 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# NOTE: the live service was created manually in the Render dashboard (not via
-# Blueprint), so this file *documents* that deployment rather than driving it.
+# NOTE: the live service was created manually in the Render dashboard. Render
+# Blueprints ADOPT an existing service when name + type match, so to make this
+# file drive deploys: dashboard → New → Blueprint → connect this repo (one-time).
+# Caveat: on sync, any field omitted here reverts to Render's default — this file
+# must stay a complete description of the service, not a partial one.
 # See docs/knowledge/features/F-007-ci-cd-and-deployment.md.
 #
 # Live: https://drukar.onrender.com — ONE service is the whole product: the API
@@ -18,13 +21,24 @@
 # cold-starts) and job state is ephemeral — history resets on deploy/restart.
 
 services:
-  - name: drukar
+  - name: drukar # must match the live service exactly — Blueprint adoption keys on name + type
     type: web
     runtime: docker
     plan: free
+    region: oregon # region is fixed at creation — verify against the dashboard before first sync
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     healthCheckPath: /healthz
+    # Deploy on push to main only after GitHub checks (ci.yml) are green.
+    autoDeployTrigger: checksPass
+    # Skip rebuilds for changes that can't affect the image (the Dockerfile
+    # COPYs the whole repo, so filter by what's provably build-irrelevant).
+    buildFilter:
+      ignoredPaths:
+        - docs/**
+        - '**/*.md'
+        - .github/**
+        - .claude/**
     envVars:
       - key: DRUKAR_PROVIDER
         value: tripo
