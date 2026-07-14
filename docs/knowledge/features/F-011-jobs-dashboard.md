@@ -35,8 +35,8 @@ readout and doubles as the job-history view. Satisfies FR-018.
 
 ### Status & gaps
 
-- `implemented`; `GET /api/jobs` covered in `jobs.test.ts`. UI verification is manual (open
-  `#/dashboard` with a few jobs in the store).
+- `implemented`; `GET /api/jobs` covered in `jobs.test.ts`. UI verified manually with real jobs
+  in the store (2026-07-14).
 - **Public on the live demo**: the API has no auth, so the dashboard — including user request
   texts — is visible to anyone who finds the URL. Acceptable for the demo posture (same is true
   of every API route); revisit with auth.
