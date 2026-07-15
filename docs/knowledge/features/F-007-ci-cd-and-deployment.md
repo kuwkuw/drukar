@@ -2,7 +2,7 @@
 id: F-007
 type: feature
 title: CI/CD and deployment
-status: partial
+status: implemented
 tags: [ci, cd, deployment, ops, cost]
 related: [B-003, F-004]
 links:
@@ -12,16 +12,17 @@ links:
   - apps/api/Dockerfile
   - apps/web/Dockerfile
   - apps/web/nginx.conf
-updated: 2026-07-09
+updated: 2026-07-15
 ---
 
 ### Summary
 
 Decision record, now partially executed. Captures how to add CI and a hosted deployment —
 optimising for free/low-cost tiers at the MVP stage — and the constraints that narrow the field.
-**Built so far**: [ci.yml](../../../.github/workflows/ci.yml) (lint + typecheck + test + build on
+**Built**: [ci.yml](../../../.github/workflows/ci.yml) (lint + typecheck + test + build on
 every push/PR) and [render.yaml](../../../render.yaml) (the Render blueprint per the recommendation
-below). Remaining: the one-time Render dashboard connect, and post-deploy verification.
+below), connected in the dashboard on 2026-07-15 — the Blueprint now drives deploys on every push
+to main, gated on CI passing (`autoDeployTrigger: checksPass`).
 
 Satisfies [NFR-011](../requirements/non-functional.md) (CI) and advances
 [NFR-007](../requirements/non-functional.md) (container-deployable, currently partial).
@@ -73,11 +74,12 @@ Web (static SPA): Cloudflare Pages / GitHub Pages / Netlify — all free and ade
 
 ### Status & gaps
 
-- `partial` — CI is green on every push (NFR-011 met), and the **API is live at
+- `implemented` — CI is green on every push (NFR-011 met), and the **API is live at
   `https://drukar.onrender.com`**: `/healthz` 200, job routes answering, and a full SSE chat
-  round-trip verified in production. The service was created manually in the dashboard (not via
-  Blueprint), so `render.yaml` documents the deployment rather than driving it; deploys are
-  triggered from the dashboard.
+  round-trip verified in production. The service was created manually in the dashboard, then
+  **adopted by the Blueprint** (connected 2026-07-15, matching on name + type) — `render.yaml`
+  now drives deploys: push to main → CI green → Render syncs and deploys. Docs-only pushes are
+  excluded via `buildFilter.ignoredPaths` (not yet observed skipping a deploy in practice).
 - Deploying surfaced and fixed a real bug the unverified-Docker gap had hidden: pnpm v10's
   `deploy` requires `--legacy` without injected workspaces (`ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE`)
   — the API image is now proven end-to-end in production.

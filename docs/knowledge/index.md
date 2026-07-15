@@ -92,7 +92,7 @@ implementing code in `links`.
 | [F-004](features/F-004-agent-loop-sse.md) | Agent loop over SSE | implemented |
 | [F-005](features/F-005-landing-page.md) | Client-facing landing page | implemented |
 | [F-006](features/F-006-free-mvp-generation-provider.md) | Free generation provider for MVP | implemented |
-| [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | partial |
+| [F-007](features/F-007-ci-cd-and-deployment.md) | CI/CD and deployment | implemented |
 | [F-008](features/F-008-abuse-and-spend-protection.md) | Abuse and spend protection | implemented |
 | [F-009](features/F-009-print-outcome-feedback.md) | Print outcome feedback and metrics | implemented |
 | [F-010](features/F-010-durable-chat-sessions.md) | Durable chat sessions and resume | implemented |

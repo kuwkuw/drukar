@@ -1,10 +1,9 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# NOTE: the live service was created manually in the Render dashboard. Render
-# Blueprints ADOPT an existing service when name + type match, so to make this
-# file drive deploys: dashboard → New → Blueprint → connect this repo (one-time).
-# Caveat: on sync, any field omitted here reverts to Render's default — this file
-# must stay a complete description of the service, not a partial one.
+# NOTE: this Blueprint DRIVES the deployment (connected 2026-07-15; it adopted
+# the originally hand-created service by name + type match). Every push to main
+# syncs it. Caveat: on sync, any field omitted here reverts to Render's default —
+# this file must stay a complete description of the service, not a partial one.
 # See docs/knowledge/features/F-007-ci-cd-and-deployment.md.
 #
 # Live: https://drukar.onrender.com — ONE service is the whole product: the API
@@ -25,7 +24,7 @@ services:
     type: web
     runtime: docker
     plan: free
-    region: oregon # region is fixed at creation — verify against the dashboard before first sync
+    region: oregon # region is fixed at creation
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     healthCheckPath: /healthz
